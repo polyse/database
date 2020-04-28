@@ -1,3 +1,5 @@
+// Package web is responsible for creating and initializing endpoints for interacting with the database.
+//
 package web
 
 import (
@@ -12,17 +14,35 @@ import (
 	"github.com/xlab/closer"
 )
 
+// App structure containing the necessary server settings and responsible for starting and stopping it.
 type App struct {
 	srv *http.Server
 }
 
+// AppConfig structure containing the server settings necessary for its operation.
 type AppConfig struct {
 	NetInterface string
 	Timeout      time.Duration
 }
 
+func (ac *AppConfig) checkConfig() {
+
+	log.Debug().Msg("checking web application config")
+
+	if ac.NetInterface == "" {
+		ac.NetInterface = "localhost:9000"
+	}
+	if ac.Timeout <= 0 {
+		ac.Timeout = 10 * time.Millisecond
+	}
+}
+
+// NewApp returns a new ready-to-launch App object with adjusted settings.
 func NewApp(appCfg AppConfig) (App, error) {
 	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
+
+	appCfg.checkConfig()
+
 	r := chi.NewRouter()
 
 	r.Use(middleware.Timeout(appCfg.Timeout))
@@ -48,6 +68,7 @@ func NewApp(appCfg AppConfig) (App, error) {
 	return App{srv: srv}, nil
 }
 
+// Run start the server, with the possibility of a smooth stop.
 func (a *App) Run(c context.Context) error {
 
 	log.Info().Msg("database server started")
@@ -72,6 +93,7 @@ func logMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// Close smoothly stops the server with the completion of all network connections with a specified timeout.
 func (a *App) Close(c context.Context) func() {
 	return func() {
 		log.Debug().Msg("start shutting down server")
