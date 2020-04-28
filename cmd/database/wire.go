@@ -7,7 +7,7 @@ import (
 	"github.com/polyse/database/internal/web"
 )
 
-func InitializeEvent(c *config) (web.App, error) {
+func initWebApp(c *config) (web.App, error) {
 	wire.Build(web.NewApp, NewWebAppCfg)
 	return web.App{}, nil
 }

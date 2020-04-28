@@ -38,7 +38,7 @@ func main() {
 	log.Debug().Msg("logger initialized")
 
 	log.Debug().Msg("starting di container")
-	a, err := InitializeEvent(cfg)
+	a, err := initWebApp(cfg)
 	if err != nil {
 		log.Err(err).Msg("error while init wire")
 		return
