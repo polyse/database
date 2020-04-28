@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -46,7 +45,7 @@ func main() {
 	}
 
 	log.Debug().Msg("starting web application")
-	if err = a.Run(context.Background()); err != nil && err != http.ErrServerClosed {
+	if err = a.Run(context.Background()); err != nil {
 		log.Err(err).Msg("error while starting web app")
 	}
 }

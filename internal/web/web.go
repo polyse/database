@@ -73,7 +73,7 @@ func (a *App) Run(c context.Context) error {
 
 	log.Info().Msg("database server started")
 	closer.Bind(a.Close(c))
-	if err := a.srv.ListenAndServe(); err != nil {
+	if err := a.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
 	return nil
