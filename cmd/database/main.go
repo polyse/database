@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/polyse/database/internal/web"
 	"net/http"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/polyse/database/internal/web"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
