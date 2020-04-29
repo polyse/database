@@ -18,7 +18,7 @@ func main() {
 
 	defer closer.Close()
 
-	cfg, err := Load()
+	cfg, err := load()
 	if err != nil {
 		log.Err(err).Msg("error while loading config")
 		return
@@ -46,7 +46,7 @@ func main() {
 
 	log.Debug().Msg("starting web application")
 
-	// Bind closer func to smoothly close connection
+	// Bind closer func to smoothly close connection.
 	closer.Bind(cancel)
 
 	if err = a.Run(); err != nil {

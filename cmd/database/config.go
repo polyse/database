@@ -4,6 +4,7 @@ import (
 	"github.com/caarlos0/env"
 )
 
+// Config is main application configuration structure.
 type config struct {
 	Listen   string `env:"LISTEN" envDefault:"localhost:9000"`
 	Timeout  string `env:"TIMEOUT" envDefault:"10ms"`
@@ -11,7 +12,7 @@ type config struct {
 	LogFmt   string `env:"LOG_FMT" envDefault:"console"`
 }
 
-func Load() (*config, error) {
+func load() (*config, error) {
 	cfg := &config{}
 
 	if err := env.Parse(cfg); err != nil {
