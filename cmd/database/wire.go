@@ -3,11 +3,12 @@
 package main
 
 import (
+	"context"
 	"github.com/google/wire"
 	"github.com/polyse/database/internal/web"
 )
 
-func initWebApp(c *config) (web.App, error) {
+func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
 	wire.Build(web.NewApp, NewWebAppCfg)
-	return web.App{}, nil
+	return nil, nil, nil
 }

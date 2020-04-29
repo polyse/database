@@ -38,14 +38,18 @@ func main() {
 	log.Debug().Msg("logger initialized")
 
 	log.Debug().Msg("starting di container")
-	a, err := initWebApp(cfg)
+	a, cancel, err := initWebApp(context.Background(), cfg)
 	if err != nil {
 		log.Err(err).Msg("error while init wire")
 		return
 	}
 
 	log.Debug().Msg("starting web application")
-	if err = a.Run(context.Background()); err != nil {
+
+	// Bind closer func to smoothly close connection
+	closer.Bind(cancel)
+
+	if err = a.Run(); err != nil {
 		log.Err(err).Msg("error while starting web app")
 	}
 }

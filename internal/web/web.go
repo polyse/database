@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/rs/zerolog/log"
-	"github.com/xlab/closer"
 )
 
 // App structure containing the necessary server settings and responsible for starting and stopping it.
@@ -38,7 +37,7 @@ func (ac *AppConfig) checkConfig() {
 }
 
 // NewApp returns a new ready-to-launch App object with adjusted settings.
-func NewApp(appCfg AppConfig) (App, error) {
+func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
 
 	appCfg.checkConfig()
@@ -64,15 +63,13 @@ func NewApp(appCfg AppConfig) (App, error) {
 		Addr:    appCfg.NetInterface,
 		Handler: r,
 	}
-
-	return App{srv: srv}, nil
+	a := &App{srv: srv}
+	return a, a.Close(ctx), nil
 }
 
-// Run start the server, with the possibility of a smooth stop.
-func (a *App) Run(c context.Context) error {
-
+// Run start the server.
+func (a *App) Run() error {
 	log.Info().Msg("database server started")
-	closer.Bind(a.Close(c))
 	if err := a.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err
 	}
@@ -94,12 +91,12 @@ func logMiddleware(next http.Handler) http.Handler {
 }
 
 // Close smoothly stops the server with the completion of all network connections with a specified timeout.
-func (a *App) Close(c context.Context) func() {
+func (a *App) Close(ctx context.Context) func() {
 	return func() {
 		log.Debug().Msg("start shutting down server")
-		ctx, cancel := context.WithTimeout(c, 10*time.Millisecond)
+		tctx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
 		defer cancel()
-		if err := a.srv.Shutdown(ctx); err != nil {
+		if err := a.srv.Shutdown(tctx); err != nil {
 			log.Err(err).Msg("can not shutdown server correctly")
 			return
 		}
