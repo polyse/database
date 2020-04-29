@@ -3,7 +3,7 @@ package filter
 import (
 	"strings"
 
-	"github.com/kljensen/snowball/english"
+	"github.com/reiver/go-porterstemmer"
 	"github.com/zoomio/stopwords"
 )
 
@@ -25,17 +25,17 @@ func TextHandle(text string, f Filters) []string {
 	output = strings.Fields(text)
 
 	if f.StopWords {
-		output = output.stopWordsDelete()
+		output = stopWordsDelete(output)
 	}
 
 	if f.Stemming {
-		output = output.stemming()
+		output = stemming(output)
 	}
 
 	return output
 }
 
-func (tokens []string) stopWordsDelete() []string {
+func stopWordsDelete(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
 		if !stopwords.IsStopWord(token) {
@@ -45,10 +45,10 @@ func (tokens []string) stopWordsDelete() []string {
 	return output
 }
 
-func (tokens []string) stemming() []string {
+func stemming(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
-		output = append(output, english.Stem(token, false))
+		output = append(output, string(porterstemmer.StemWithoutLowerCasing([]rune(token))))
 	}
 	return output
 }
