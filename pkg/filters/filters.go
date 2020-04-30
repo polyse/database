@@ -4,7 +4,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/reiver/go-porterstemmer"
+	"github.com/kljensen/snowball/english"
 	"github.com/zoomio/stopwords"
 )
 
@@ -45,7 +45,11 @@ type Stemming struct{}
 func (s Stemming) Handle(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
-		output = append(output, string(porterstemmer.StemWithoutLowerCasing([]rune(strings.ToLower(token)))))
+		stemmedToken := english.Stem(token, false)
+		if len(stemmedToken) != len(token) {
+			token = token[strings.Index(strings.ToLower(token), stemmedToken):len(stemmedToken)]
+		}
+		output = append(output, token)
 	}
 	return output
 }
