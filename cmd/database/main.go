@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/polyse/database/internal/web"
 
@@ -19,6 +18,7 @@ func main() {
 	defer closer.Close()
 
 	cfg, err := load()
+
 	if err != nil {
 		log.Err(err).Msg("error while loading config")
 		return
@@ -54,12 +54,8 @@ func main() {
 	}
 }
 
-func NewWebAppCfg(c *config) (web.AppConfig, error) {
-	tmt, err := time.ParseDuration(c.Timeout)
-	if err != nil {
-		return web.AppConfig{}, err
-	}
-	return web.AppConfig{Timeout: tmt, NetInterface: c.Listen}, nil
+func initWebAppCfg(c *config) (web.AppConfig, error) {
+	return web.AppConfig{Timeout: c.Timeout, NetInterface: c.Listen}, nil
 }
 
 func initLogger(c *config) error {

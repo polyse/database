@@ -13,7 +13,7 @@ import (
 // Injectors from wire.go:
 
 func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
-	appConfig, err := NewWebAppCfg(c)
+	appConfig, err := initWebAppCfg(c)
 	if err != nil {
 		return nil, nil, err
 	}

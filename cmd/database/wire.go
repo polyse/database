@@ -9,6 +9,6 @@ import (
 )
 
 func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
-	wire.Build(web.NewApp, NewWebAppCfg)
+	wire.Build(web.NewApp, initWebAppCfg)
 	return nil, nil, nil
 }
