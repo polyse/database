@@ -8,9 +8,7 @@ import (
 	"github.com/zoomio/stopwords"
 )
 
-type Filter interface {
-	Handle(tokens []string) []string
-}
+type Filter func(tokens []string) []string
 
 func FilterText(text string, filters ...Filter) []string {
 	tokens := strings.Fields(text)
@@ -22,15 +20,13 @@ func FilterText(text string, filters ...Filter) []string {
 	}
 
 	for _, filter := range filters {
-		tokens = filter.Handle(tokens)
+		tokens = filter(tokens)
 	}
 
 	return tokens
 }
 
-type StopWords struct{}
-
-func (sw StopWords) Handle(tokens []string) []string {
+func StopWords(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
 		if !stopwords.IsStopWord(strings.ToLower(token)) {
@@ -40,9 +36,7 @@ func (sw StopWords) Handle(tokens []string) []string {
 	return output
 }
 
-type Stemming struct{}
-
-func (s Stemming) Handle(tokens []string) []string {
+func Stemming(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
 		stemmedToken := english.Stem(token, false)
@@ -54,9 +48,7 @@ func (s Stemming) Handle(tokens []string) []string {
 	return output
 }
 
-type ToLower struct{}
-
-func (tl ToLower) Handle(tokens []string) []string {
+func ToLower(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
 		output = append(output, strings.ToLower(token))
