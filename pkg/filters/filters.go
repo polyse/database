@@ -8,8 +8,10 @@ import (
 	"github.com/zoomio/stopwords"
 )
 
+// Filter is type for input sort functions as parameters to FilterText
 type Filter func(tokens []string) []string
 
+// FilterText divide text to tokens, trim tokens and apply filters to tokens
 func FilterText(text string, filters ...Filter) []string {
 	tokens := strings.Fields(text)
 
@@ -26,6 +28,7 @@ func FilterText(text string, filters ...Filter) []string {
 	return tokens
 }
 
+// StopWords remove stop words from tokens
 func StopWords(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
@@ -36,7 +39,8 @@ func StopWords(tokens []string) []string {
 	return output
 }
 
-func Stemming(tokens []string) []string {
+// Stemm stemm tokens
+func Stemm(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
 		stemmedToken := english.Stem(token, false)
@@ -48,6 +52,7 @@ func Stemming(tokens []string) []string {
 	return output
 }
 
+// ToLower apply alower case for tokens
 func ToLower(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
