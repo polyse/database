@@ -44,7 +44,7 @@ func StopWords(tokens []string) []string {
 
 // Stemm stemm tokens
 func Stemm(tokens []string) []string {
-	var output []string
+	output := make([]string, 0, len(tokens))
 	for _, token := range tokens {
 		stemmedToken := english.Stem(token, false)
 		if len(stemmedToken) != len(token) {
@@ -57,7 +57,7 @@ func Stemm(tokens []string) []string {
 
 // ToLower apply alower case for tokens
 func ToLower(tokens []string) []string {
-	var output []string
+	output := make([]string, 0, len(tokens))
 	for _, token := range tokens {
 		output = append(output, strings.ToLower(token))
 	}
