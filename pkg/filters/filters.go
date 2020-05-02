@@ -13,12 +13,15 @@ type Filter func(tokens []string) []string
 
 // FilterText divide text to tokens, trim tokens and apply filters to tokens
 func FilterText(text string, filters ...Filter) []string {
-	tokens := strings.Fields(text)
+	tokens := strings.FieldsFunc(text, func(c rune) bool {
+		return !unicode.IsLetter(c) && !unicode.IsNumber(c) && c != '\'' && c != '-'
+	})
 
-	for i, token := range tokens {
-		tokens[i] = strings.TrimFunc(token, func(r rune) bool {
-			return !unicode.IsLetter(r) && !unicode.IsNumber(r)
-		})
+	for i := 0; i < len(tokens); i++  {
+		if tokens[i] == "'" || tokens[i] == "-" {
+			tokens = append(tokens[:i], tokens[i+1:]...)
+			i--
+		}
 	}
 
 	for _, filter := range filters {
