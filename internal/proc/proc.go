@@ -26,6 +26,18 @@ func NewProcessor(repo db.Repository, tokenizer filters.Tokenizer, textFilters .
 
 // ProcessAndInsertString changes the input data using the filters specified in this processor,
 // and also saves them in a given collection of data bases.
+//
+// Input format:
+// 		 {
+//			 "source1" : "data1 data2"
+//			 "source2" : "data2 data3"
+// 		 }
+// Format after processing:
+// 		{
+//			"data1" : ["source1"]
+//			"data2" : ["source1", "source2"]
+//			"data3" : ["source2"]
+//		}
 func (p *SimpleProcessor) ProcessAndInsertString(data map[string]string) error {
 	parsed := make(map[string][]string)
 	for k := range data {
