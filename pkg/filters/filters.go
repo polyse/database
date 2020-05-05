@@ -17,18 +17,18 @@ func FilterText(text string, filters ...Filter) []string {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c) && c != '\'' && c != '-'
 	})
 
-	for i := 0; i < len(tokens); i++  {
-		if tokens[i] == "'" || tokens[i] == "-" {
-			tokens = append(tokens[:i], tokens[i+1:]...)
-			i--
+	var output []string
+	for _, token := range tokens {
+		if token != "'" && token != "-" {
+			output = append(output, token)
 		}
 	}
 
 	for _, filter := range filters {
-		tokens = filter(tokens)
+		output = filter(output)
 	}
 
-	return tokens
+	return output
 }
 
 // StopWords remove stop words from tokens
@@ -42,24 +42,12 @@ func StopWords(tokens []string) []string {
 	return output
 }
 
-// Stemm stemm tokens
-func Stemm(tokens []string) []string {
+// StemmAndToLower stemm tokens and change them to lower case
+func StemmAndToLower(tokens []string) []string {
 	output := make([]string, 0, len(tokens))
 	for _, token := range tokens {
-		stemmedToken := english.Stem(token, false)
-		if len(stemmedToken) != len(token) {
-			token = token[strings.Index(strings.ToLower(token), stemmedToken):len(stemmedToken)]
-		}
+		token := english.Stem(token, false)
 		output = append(output, token)
-	}
-	return output
-}
-
-// ToLower apply alower case for tokens
-func ToLower(tokens []string) []string {
-	output := make([]string, 0, len(tokens))
-	for _, token := range tokens {
-		output = append(output, strings.ToLower(token))
 	}
 	return output
 }
