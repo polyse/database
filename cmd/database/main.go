@@ -6,11 +6,37 @@ import (
 	"os"
 	"strings"
 
+	"github.com/google/wire"
+	"github.com/polyse/database/internal/db"
+	"github.com/polyse/database/internal/proc"
+
 	"github.com/polyse/database/internal/web"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/closer"
+)
+
+var (
+	procSetter = wire.NewSet(
+		initDbCol,
+		initDbCfg,
+		db.NewConnection,
+		db.NewNutRepo,
+		wire.Bind(
+			new(db.Repository),
+			new(*db.NutsRepository)),
+		proc.NewProcessor,
+	)
+
+	dbSetter = wire.NewSet(
+		procSetter,
+		wire.Bind(
+			new(proc.Processor),
+			new(*proc.SimpleProcessor),
+		),
+		proc.NewSimpleProcessorManagerWithProc,
+	)
 )
 
 func main() {
@@ -53,9 +79,23 @@ func main() {
 	// Bind closer func to smoothly close connection.
 	closer.Bind(cancel)
 
+	_, dbCancel, err := initProcessorManager(cfg)
+
+	closer.Bind(dbCancel)
+
+	log.Debug().Msg("starting web application")
+
 	if err = a.Run(); err != nil {
 		log.Err(err).Msg("error while starting web app")
 	}
+}
+
+func initDbCol(c *config) db.CollectionName {
+	return db.CollectionName(c.BaseCollection)
+}
+
+func initDbCfg(c *config) db.Config {
+	return db.Config(c.DbFile)
 }
 
 func initWebAppCfg(c *config) (web.AppConfig, error) {
