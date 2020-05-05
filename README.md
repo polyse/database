@@ -13,3 +13,12 @@ make
 ```
 
 ## Documentation
+
+> To see package documentation:
+> ```
+> go run golang.org/x/tools/cmd/godoc -http=:6060
+> ```
+> After it you can see documentation in browser by url 
+> [http://localhost:6060/pkg/github.com/polyse/database](http://localhost:6060/pkg/github.com/polyse/database)
+>
+> Url to see documentation to **internal** folder: [http://localhost:6060/pkg/github.com/polyse/database/internal](http://localhost:6060/pkg/github.com/polyse/database/internal)
