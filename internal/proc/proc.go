@@ -28,10 +28,10 @@ func NewProcessor(repo db.Repository, tokenizer filters.Tokenizer, textFilters .
 // and also saves them in a given collection of data bases.
 //
 // Input format:
-// 		 {
-//			 "source1" : "data1 data2"
-//			 "source2" : "data2 data3"
-// 		 }
+// 		{
+//			"source1" : "data1 data2"
+//			"source2" : "data2 data3"
+// 		}
 // Format after processing:
 // 		{
 //			"data1" : ["source1"]
