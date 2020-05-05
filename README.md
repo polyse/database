@@ -1,4 +1,4 @@
-# polisSE: Database
+# polySE: Database
 [![Go Report Card](https://goreportcard.com/badge/github.com/polyse/database)](https://goreportcard.com/report/github.com/polyse/database)
 
 [ElasticSearch](https://www.elastic.co/) conceptual searchable indexable database.
