@@ -41,7 +41,7 @@ func NewProcessor(repo db.Repository, tokenizer filters.Tokenizer, textFilters .
 func (p *SimpleProcessor) ProcessAndInsertString(data map[string]string) error {
 	parsed := make(map[string][]string)
 	for k := range data {
-		clearText := filters.FilterText(data[k], p.filters...)
+		clearText := p.tokenizer(data[k], p.filters...)
 		for i := range clearText {
 			if parsed[clearText[i]] == nil {
 				parsed[clearText[i]] = []string{k}
