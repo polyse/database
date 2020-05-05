@@ -2,30 +2,25 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"os"
-	"strings"
-
 	"github.com/google/wire"
 	"github.com/polyse/database/internal/db"
 	"github.com/polyse/database/internal/proc"
 
-	"github.com/polyse/database/internal/web"
-
-	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/closer"
 )
 
 var (
 	procSetter = wire.NewSet(
-		initDbCol,
-		initDbCfg,
-		db.NewConnection,
+		initDbCollection,
+		initDbConfig,
+		db.NewNutConnection,
 		db.NewNutRepo,
 		wire.Bind(
 			new(db.Repository),
 			new(*db.NutsRepository)),
+		initTokenizer,
+		initFilters,
 		proc.NewProcessor,
 	)
 
@@ -88,32 +83,4 @@ func main() {
 	if err = a.Run(); err != nil {
 		log.Err(err).Msg("error while starting web app")
 	}
-}
-
-func initDbCol(c *config) db.CollectionName {
-	return db.CollectionName(c.BaseCollection)
-}
-
-func initDbCfg(c *config) db.Config {
-	return db.Config(c.DbFile)
-}
-
-func initWebAppCfg(c *config) (web.AppConfig, error) {
-	return web.AppConfig{Timeout: c.Timeout, NetInterface: c.Listen}, nil
-}
-
-func initLogger(c *config) error {
-	logLvl, err := zerolog.ParseLevel(strings.ToLower(c.LogLevel))
-	if err != nil {
-		return err
-	}
-	zerolog.SetGlobalLevel(logLvl)
-	switch c.LogFmt {
-	case "console":
-		log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stdout})
-	case "json":
-	default:
-		return fmt.Errorf("unknown output format %s", c.LogFmt)
-	}
-	return nil
 }

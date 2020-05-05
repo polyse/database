@@ -16,7 +16,7 @@ var (
 type repositoryTestSuite struct {
 	suite.Suite
 	repo Repository
-	con  *Connection
+	con  *NutConnection
 }
 
 func TestStartConnectionSuit(t *testing.T) {
@@ -24,7 +24,7 @@ func TestStartConnectionSuit(t *testing.T) {
 }
 
 func (cts *repositoryTestSuite) SetupTest() {
-	c, _, err := NewConnection(Config(dbDir))
+	c, _, err := NewNutConnection(Config(dbDir))
 	if err != nil {
 		panic(err)
 	}

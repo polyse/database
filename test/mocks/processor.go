@@ -23,13 +23,13 @@ func (_m *Processor) GetCollectionName() string {
 	return r0
 }
 
-// ProcessAndInsertString provides a mock function with given fields: resource, data
-func (_m *Processor) ProcessAndInsertString(resource string, data string) error {
-	ret := _m.Called(resource, data)
+// ProcessAndInsertString provides a mock function with given fields: data
+func (_m *Processor) ProcessAndInsertString(data map[string]string) error {
+	ret := _m.Called(data)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string) error); ok {
-		r0 = rf(resource, data)
+	if rf, ok := ret.Get(0).(func(map[string]string) error); ok {
+		r0 = rf(data)
 	} else {
 		r0 = ret.Error(0)
 	}

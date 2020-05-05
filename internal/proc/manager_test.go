@@ -1,6 +1,7 @@
 package proc
 
 import (
+	"github.com/polyse/database/pkg/filters"
 	"testing"
 
 	"github.com/polyse/database/internal/db"
@@ -12,7 +13,7 @@ import (
 
 func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 	type fields struct {
-		filters []func()
+		filters []filters.Filter
 		repo    db.Repository
 	}
 	tests := []struct {
@@ -58,13 +59,13 @@ func (pts *processorTestSuite) SetupTest() {
 	testRepo.On("GetCollectionName").Return("testCollection")
 	testRepo.On("Save", mock.Anything).Return(nil)
 
-	pts.pr = NewProcessor(testRepo)
+	pts.pr = NewProcessor(testRepo, filters.FilterText, filters.StemmAndToLower, filters.StopWords)
 	pts.tr = testRepo
 }
 
 func (pts *processorTestSuite) TestSimpleProcessor_ProcessAndInsertString() {
-	assert.NoError(pts.T(), pts.pr.ProcessAndInsertString("test", "data"))
-	pts.tr.AssertCalled(pts.T(), "Save", map[string][]string{"test": {"data"}})
+	assert.NoError(pts.T(), pts.pr.ProcessAndInsertString(map[string]string{"test": "is Data map"}))
+	pts.tr.AssertCalled(pts.T(), "Save", map[string][]string{"data": {"test"}, "map": {"test"}})
 }
 
 type processorManagerTestSuite struct {
@@ -107,12 +108,19 @@ func (pts *processorManagerTestSuite) SetupTest() {
 
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors() {
 	pts.Len(pts.prm, 2)
-	pts.prm.AddProcessor(NewProcessor(db.NewNutRepo("testCollection3", nil)))
+	pts.prm.AddProcessor(
+		NewProcessor(
+			db.NewNutRepo("testCollection3", nil),
+			filters.FilterText,
+			filters.StemmAndToLower,
+			filters.StopWords,
+		),
+	)
 	pts.Len(pts.prm, 3)
 }
 
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_ProcessAndInsertString() {
-	assert.NoError(pts.T(), pts.prm.ProcessAndInsertString("testCollection", "test", "data"))
-	pts.tr.AssertCalled(pts.T(), "ProcessAndInsertString", "test", "data")
+	assert.NoError(pts.T(), pts.prm.ProcessAndInsertString(map[string]string{"test": "data"}, "testCollection"))
+	pts.tr.AssertCalled(pts.T(), "ProcessAndInsertString", map[string]string{"test": "data"})
 	pts.tr2.AssertNotCalled(pts.T(), "ProcessAndInsertString", mock.Anything, mock.Anything)
 }
