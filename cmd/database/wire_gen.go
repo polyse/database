@@ -28,7 +28,7 @@ func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
 	}, nil
 }
 
-func initProcessorManager(c *config) (proc.SimpleProcessorManager, func(), error) {
+func initProcessorManager(c *config) (*proc.SimpleProcessorManager, func(), error) {
 	collectionName := initDbCollection(c)
 	dbConfig := initDbConfig(c)
 	nutConnection, cleanup, err := db.NewNutConnection(dbConfig)

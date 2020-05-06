@@ -55,9 +55,11 @@ func TestStartProcessorSuit(t *testing.T) {
 func (pts *processorTestSuite) SetupTest() {
 	testRepo := new(mocks.Repository)
 
-	testRepo.On("GetAll").Return(nil)
-	testRepo.On("GetCollectionName").Return("testCollection")
-	testRepo.On("Save", mock.Anything).Return(nil)
+	testRepo.
+		On("GetCollectionName").
+		Return("testCollection").
+		On("Save", mock.Anything).
+		Return(nil)
 
 	pts.pr = NewProcessor(testRepo, filters.FilterText, filters.StemmAndToLower, filters.StopWords)
 	pts.tr = testRepo
@@ -70,7 +72,7 @@ func (pts *processorTestSuite) TestSimpleProcessor_ProcessAndInsertString() {
 
 type processorManagerTestSuite struct {
 	suite.Suite
-	prm ProcessorManager
+	prm *SimpleProcessorManager
 	tr  *mocks.Processor
 	tr2 *mocks.Processor
 }
@@ -86,18 +88,14 @@ func (pts *processorManagerTestSuite) SetupTest() {
 		On("ProcessAndInsertString", mock.Anything, mock.Anything).
 		Return(nil).
 		On("GetCollectionName").
-		Return("testCollection").
-		On("ProcessAndGet", mock.Anything).
-		Return(nil)
+		Return("testCollection")
 
 	testProc2 := new(mocks.Processor)
 	testProc2.
 		On("ProcessAndInsertString", mock.Anything, mock.Anything).
 		Return(nil).
 		On("GetCollectionName").
-		Return("secondTestCollection").
-		On("ProcessAndGet", mock.Anything).
-		Return(nil)
+		Return("secondTestCollection")
 
 	pts.prm = NewSimpleProcessorManagerWithProc(testProc)
 
@@ -107,7 +105,7 @@ func (pts *processorManagerTestSuite) SetupTest() {
 }
 
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors() {
-	pts.Len(pts.prm, 2)
+	pts.Len(pts.prm.processors, 2)
 	pts.prm.AddProcessor(
 		NewProcessor(
 			db.NewNutRepo("testCollection3", nil),
@@ -116,7 +114,7 @@ func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors()
 			filters.StopWords,
 		),
 	)
-	pts.Len(pts.prm, 3)
+	pts.Len(pts.prm.processors, 3)
 }
 
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_ProcessAndInsertString() {
