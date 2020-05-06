@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"github.com/polyse/database/internal/db"
+	"github.com/polyse/database/internal/collection"
 	"github.com/polyse/database/internal/web"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/xujiajun/nutsdb"
 	"os"
 	"strings"
 )
@@ -21,12 +22,29 @@ func initFilters() []filters.Filter {
 	return []filters.Filter{filters.StemmAndToLower, filters.StopWords}
 }
 
-func initDbCollection(c *config) db.CollectionName {
-	return db.CollectionName(c.BaseCollection)
+func initConnection(cfg collection.Config) (*nutsdb.DB, func(), error) {
+	log.Debug().Interface("configuration", cfg).Msg("opening new connection to database")
+
+	opt := nutsdb.DefaultOptions
+	opt.Dir = cfg.File
+	nutsDb, err := nutsdb.Open(opt)
+	if err != nil {
+		return nil, nil, err
+	}
+	log.Info().Msg("connection opened")
+	return nutsDb, func() {
+		log.Info().Msg("start closing database connection")
+		if err := nutsDb.Merge(); err != nil {
+			log.Err(err).Msg("can not merge database")
+		}
+		if err = nutsDb.Close(); err != nil {
+			log.Err(err).Msg("can not close database connection")
+		}
+	}, nil
 }
 
-func initDbConfig(c *config) db.Config {
-	return db.Config(c.DbFile)
+func initDbConfig(c *config) collection.Config {
+	return collection.Config{File: c.DbFile}
 }
 
 func initWebAppCfg(c *config) (web.AppConfig, error) {

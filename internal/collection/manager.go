@@ -1,6 +1,6 @@
 // Package proc is intended for separation, processing of incoming data using the specified filters
 // for each collection for subsequent data saving to the database.
-package proc
+package collection
 
 import (
 	"fmt"

@@ -3,8 +3,7 @@ package main
 import (
 	"context"
 	"github.com/google/wire"
-	"github.com/polyse/database/internal/db"
-	"github.com/polyse/database/internal/proc"
+	"github.com/polyse/database/internal/collection"
 
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/closer"
@@ -12,25 +11,24 @@ import (
 
 var (
 	procSetter = wire.NewSet(
-		initDbCollection,
 		initDbConfig,
-		db.NewNutConnection,
-		db.NewNutRepo,
+		initConnection,
+		collection.NewNutRepo,
 		wire.Bind(
-			new(db.Repository),
-			new(*db.NutsRepository)),
+			new(collection.Repository),
+			new(*collection.NutsRepository)),
 		initTokenizer,
 		initFilters,
-		proc.NewProcessor,
+		collection.NewSimpleProcessor,
 	)
 
 	dbSetter = wire.NewSet(
 		procSetter,
 		wire.Bind(
-			new(proc.Processor),
-			new(*proc.SimpleProcessor),
+			new(collection.Processor),
+			new(*collection.SimpleProcessor),
 		),
-		proc.NewSimpleProcessorManagerWithProc,
+		collection.NewSimpleProcessorManagerWithProc,
 	)
 )
 
@@ -75,9 +73,8 @@ func main() {
 	closer.Bind(cancel)
 
 	log.Debug().Msg("starting db")
-	_, dbCancel, err := initProcessorManager(cfg)
-
-	closer.Bind(dbCancel)
+	_, connCLoser, err := initProcessorManager(cfg, "default")
+	closer.Bind(connCLoser)
 
 	log.Debug().Msg("starting web application")
 

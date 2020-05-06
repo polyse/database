@@ -1,4 +1,4 @@
-package db
+package collection
 
 import (
 	"os"
@@ -15,8 +15,8 @@ var (
 
 type repositoryTestSuite struct {
 	suite.Suite
-	repo Repository
-	con  *NutConnection
+	repo   Repository
+	nutsDb *nutsdb.DB
 }
 
 func TestStartConnectionSuit(t *testing.T) {
@@ -24,17 +24,19 @@ func TestStartConnectionSuit(t *testing.T) {
 }
 
 func (cts *repositoryTestSuite) SetupTest() {
-	c, _, err := NewNutConnection(Config(dbDir))
+	opt := nutsdb.DefaultOptions
+	opt.Dir = dbDir
+	nutsDb, err := nutsdb.Open(opt)
 	if err != nil {
 		panic(err)
 	}
-	repo := NewNutRepo(CollectionName(nutColl), c)
+	repo := NewNutRepo(Name(nutColl), nutsDb)
 	cts.repo = repo
-	cts.con = c
+	cts.nutsDb = nutsDb
 }
 
 func (cts *repositoryTestSuite) TearDownTest() {
-	if err := cts.con.Close(); err != nil {
+	if err := cts.nutsDb.Close(); err != nil {
 		panic(err)
 	}
 	if err := os.RemoveAll(dbDir); err != nil {
@@ -58,7 +60,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
 		},
 	}
 	cts.NoError(cts.repo.Save(saveData))
-	if err := cts.con.db.View(
+	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
 			key := []byte("test")
 			bucket := cts.repo.GetCollectionName()
@@ -88,7 +90,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
 		},
 	}
 	cts.NoError(cts.repo.Save(saveData))
-	if err := cts.con.db.View(
+	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
 			key := []byte("test1")
 			bucket := cts.repo.GetCollectionName()
@@ -112,7 +114,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
 		},
 	}))
 
-	if err := cts.con.db.View(
+	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
 			key := []byte("test1")
 			bucket := cts.repo.GetCollectionName()

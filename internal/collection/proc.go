@@ -1,7 +1,7 @@
-package proc
+package collection
 
 import (
-	"github.com/polyse/database/internal/db"
+	"encoding/json"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog/log"
 )
@@ -17,11 +17,24 @@ type Processor interface {
 type SimpleProcessor struct {
 	tokenizer filters.Tokenizer
 	filters   []filters.Filter
-	repo      db.Repository
+	repo      Repository
+}
+
+type Index struct {
+	token string
+	pos   []int
+}
+
+func (i *Index) String() string {
+	_, err := json.Marshal(i)
+	if err != nil {
+		log.Err(err).Interface("index", Index{}).Msg("can not marshall data")
+	}
+	return ""
 }
 
 // NewProcessor function-constructor to SimpleProcessor
-func NewProcessor(repo db.Repository, tokenizer filters.Tokenizer, textFilters ...filters.Filter) *SimpleProcessor {
+func NewSimpleProcessor(repo Repository, tokenizer filters.Tokenizer, textFilters ...filters.Filter) *SimpleProcessor {
 	return &SimpleProcessor{repo: repo, filters: textFilters, tokenizer: tokenizer}
 }
 

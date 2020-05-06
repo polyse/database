@@ -7,8 +7,7 @@ package main
 
 import (
 	"context"
-	"github.com/polyse/database/internal/db"
-	"github.com/polyse/database/internal/proc"
+	"github.com/polyse/database/internal/collection"
 	"github.com/polyse/database/internal/web"
 )
 
@@ -28,18 +27,17 @@ func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
 	}, nil
 }
 
-func initProcessorManager(c *config) (*proc.SimpleProcessorManager, func(), error) {
-	collectionName := initDbCollection(c)
-	dbConfig := initDbConfig(c)
-	nutConnection, cleanup, err := db.NewNutConnection(dbConfig)
+func initProcessorManager(c *config, collName collection.Name) (*collection.SimpleProcessorManager, func(), error) {
+	collectionConfig := initDbConfig(c)
+	db, cleanup, err := initConnection(collectionConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	nutsRepository := db.NewNutRepo(collectionName, nutConnection)
+	nutsRepository := collection.NewNutRepo(collName, db)
 	tokenizer := initTokenizer()
 	v := initFilters()
-	simpleProcessor := proc.NewProcessor(nutsRepository, tokenizer, v...)
-	simpleProcessorManager := proc.NewSimpleProcessorManagerWithProc(simpleProcessor)
+	simpleProcessor := collection.NewSimpleProcessor(nutsRepository, tokenizer, v...)
+	simpleProcessorManager := collection.NewSimpleProcessorManagerWithProc(simpleProcessor)
 	return simpleProcessorManager, func() {
 		cleanup()
 	}, nil

@@ -1,10 +1,9 @@
-package proc
+package collection
 
 import (
 	"github.com/polyse/database/pkg/filters"
 	"testing"
 
-	"github.com/polyse/database/internal/db"
 	"github.com/polyse/database/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -14,7 +13,7 @@ import (
 func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 	type fields struct {
 		filters []filters.Filter
-		repo    db.Repository
+		repo    Repository
 	}
 	tests := []struct {
 		name   string
@@ -24,7 +23,7 @@ func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 		{
 			name: "Normal Test",
 			fields: fields{
-				repo: db.NewNutRepo("testCollection", nil),
+				repo: NewNutRepo("testCollection", nil),
 			},
 			want: "testCollection",
 		},
@@ -61,7 +60,7 @@ func (pts *processorTestSuite) SetupTest() {
 		On("Save", mock.Anything).
 		Return(nil)
 
-	pts.pr = NewProcessor(testRepo, filters.FilterText, filters.StemmAndToLower, filters.StopWords)
+	pts.pr = NewSimpleProcessor(testRepo, filters.FilterText, filters.StemmAndToLower, filters.StopWords)
 	pts.tr = testRepo
 }
 
@@ -107,8 +106,8 @@ func (pts *processorManagerTestSuite) SetupTest() {
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors() {
 	pts.Len(pts.prm.processors, 2)
 	pts.prm.AddProcessor(
-		NewProcessor(
-			db.NewNutRepo("testCollection3", nil),
+		NewSimpleProcessor(
+			NewNutRepo("testCollection3", nil),
 			filters.FilterText,
 			filters.StemmAndToLower,
 			filters.StopWords,
