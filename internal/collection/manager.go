@@ -4,8 +4,9 @@ package collection
 
 import (
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"sync"
+
+	"github.com/rs/zerolog/log"
 )
 
 // ProcessorManager interface designed to manage a set of different processors for a different collections.

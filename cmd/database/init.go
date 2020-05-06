@@ -2,14 +2,15 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/polyse/database/internal/collection"
 	"github.com/polyse/database/internal/web"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xujiajun/nutsdb"
-	"os"
-	"strings"
 )
 
 func initTokenizer() filters.Tokenizer {

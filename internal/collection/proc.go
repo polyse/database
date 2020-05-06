@@ -2,6 +2,7 @@ package collection
 
 import (
 	"encoding/json"
+
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog/log"
 )

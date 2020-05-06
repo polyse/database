@@ -1,8 +1,9 @@
 package collection
 
 import (
-	"github.com/polyse/database/pkg/filters"
 	"testing"
+
+	"github.com/polyse/database/pkg/filters"
 
 	"github.com/polyse/database/test/mocks"
 	"github.com/stretchr/testify/assert"
