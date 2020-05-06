@@ -74,6 +74,7 @@ func main() {
 	// Bind closer func to smoothly close connection.
 	closer.Bind(cancel)
 
+	log.Debug().Msg("starting db")
 	_, dbCancel, err := initProcessorManager(cfg)
 
 	closer.Bind(dbCancel)

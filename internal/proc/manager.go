@@ -4,6 +4,7 @@ package proc
 
 import (
 	"fmt"
+	"github.com/rs/zerolog/log"
 	"sync"
 )
 
@@ -34,6 +35,7 @@ func NewSimpleProcessorManagerWithProc(proc Processor) *SimpleProcessorManager {
 
 // AddProcessor adding more processor to manager.
 func (spm *SimpleProcessorManager) AddProcessor(proc ...Processor) {
+	log.Debug().Interface("processors", proc).Msg("adding processors")
 	spm.Lock()
 	defer spm.Unlock()
 	for i := range proc {
@@ -44,6 +46,7 @@ func (spm *SimpleProcessorManager) AddProcessor(proc ...Processor) {
 // ProcessAndInsertString selects the necessary processor for this collection
 // and transfers data to it for subsequent processing and storage.
 func (spm *SimpleProcessorManager) ProcessAndInsertString(data map[string]string, colName string) error {
+	log.Debug().Str("collection name", colName).Msg("manager, start inserting data")
 	spm.RLock()
 	val, ok := spm.processors[colName]
 	spm.RUnlock()

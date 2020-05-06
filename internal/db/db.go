@@ -37,12 +37,11 @@ func (nr *NutsRepository) GetCollectionName() string {
 
 // Save saves data to the collection of this repository.
 func (nr *NutsRepository) Save(ent map[string][]string) error {
+	log.Debug().Interface("data", ent).Msg("start inserting data")
 	tx, err := nr.c.db.Begin(true)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "can not open transaction")
 	}
-
-	log.Debug().Interface("data", ent).Msg("start inserting data")
 
 	for i := range ent {
 		vals := ent[i]

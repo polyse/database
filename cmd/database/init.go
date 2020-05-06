@@ -12,10 +12,12 @@ import (
 )
 
 func initTokenizer() filters.Tokenizer {
+	log.Debug().Msg("initialize tokenizer")
 	return filters.FilterText
 }
 
 func initFilters() []filters.Filter {
+	log.Debug().Msg("initialize filters")
 	return []filters.Filter{filters.StemmAndToLower, filters.StopWords}
 }
 
@@ -32,6 +34,7 @@ func initWebAppCfg(c *config) (web.AppConfig, error) {
 }
 
 func initLogger(c *config) error {
+	log.Debug().Msg("initialize logger")
 	logLvl, err := zerolog.ParseLevel(strings.ToLower(c.LogLevel))
 	if err != nil {
 		return err

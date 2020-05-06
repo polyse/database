@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/rs/zerolog/log"
 	"time"
 
 	"github.com/caarlos0/env"
@@ -17,6 +18,7 @@ type config struct {
 }
 
 func load() (*config, error) {
+	log.Debug().Msg("loading configuration")
 	cfg := &config{}
 
 	if err := env.Parse(cfg); err != nil {

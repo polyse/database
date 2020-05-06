@@ -12,6 +12,9 @@ type NutConnection struct {
 
 // NewNutConnection function-constructor to NewNutConnection.
 func NewNutConnection(cfg Config) (*NutConnection, func(), error) {
+
+	log.Debug().Interface("configuration", cfg).Msg("opening new connection to database")
+
 	opt := nutsdb.DefaultOptions
 	opt.Dir = string(cfg)
 	db, err := nutsdb.Open(opt)
@@ -19,6 +22,7 @@ func NewNutConnection(cfg Config) (*NutConnection, func(), error) {
 		return nil, nil, err
 	}
 	conn := &NutConnection{db: db}
+	log.Info().Msg("connection opened")
 	return conn, func() {
 		if err = conn.Close(); err != nil {
 			log.Err(err).Msg("can not close database connection")
@@ -28,7 +32,7 @@ func NewNutConnection(cfg Config) (*NutConnection, func(), error) {
 
 // Close merge database files and close connection to NutDB.
 func (c *NutConnection) Close() error {
-	log.Debug().Msg("start closing database connection")
+	log.Info().Msg("start closing database connection")
 	if err := c.db.Merge(); err != nil {
 		log.Err(err).Msg("can not merge database")
 	}

@@ -3,6 +3,7 @@ package proc
 import (
 	"github.com/polyse/database/internal/db"
 	"github.com/polyse/database/pkg/filters"
+	"github.com/rs/zerolog/log"
 )
 
 // Processor  an interface designed to process and filter incoming data for subsequent
@@ -39,6 +40,10 @@ func NewProcessor(repo db.Repository, tokenizer filters.Tokenizer, textFilters .
 //			"data3" : ["source2"]
 //		}
 func (p *SimpleProcessor) ProcessAndInsertString(data map[string]string) error {
+	log.Debug().
+		Str("collection in processor", p.GetCollectionName()).
+		Interface("filters", p.filters).
+		Msg("processing data")
 	parsed := make(map[string][]string)
 	for k := range data {
 		clearText := p.tokenizer(data[k], p.filters...)
