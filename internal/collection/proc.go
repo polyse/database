@@ -19,6 +19,7 @@ type SimpleProcessor struct {
 	tokenizer filters.Tokenizer
 	filters   []filters.Filter
 	repo      Repository
+	colName   string
 }
 
 type Index struct {
@@ -35,9 +36,11 @@ func (i *Index) GetBytes() []byte {
 	return b
 }
 
+type Name string
+
 // NewProcessor function-constructor to SimpleProcessor
-func NewSimpleProcessor(repo Repository, tokenizer filters.Tokenizer, textFilters ...filters.Filter) *SimpleProcessor {
-	return &SimpleProcessor{repo: repo, filters: textFilters, tokenizer: tokenizer}
+func NewSimpleProcessor(repo Repository, colName Name, tokenizer filters.Tokenizer, textFilters ...filters.Filter) *SimpleProcessor {
+	return &SimpleProcessor{repo: repo, filters: textFilters, tokenizer: tokenizer, colName: string(colName)}
 }
 
 // ProcessAndInsertString changes the input data using the filters specified in this processor,
@@ -45,14 +48,14 @@ func NewSimpleProcessor(repo Repository, tokenizer filters.Tokenizer, textFilter
 //
 // Input format:
 // 		{
-//			"source1" : "data1 data2"
+//			"source1" : "data1 data2 data2"
 //			"source2" : "data2 data3"
 // 		}
 // Format after processing:
 // 		{
-//			"data1" : ["source1"]
-//			"data2" : ["source1", "source2"]
-//			"data3" : ["source2"]
+//			"data1" : ["{"source1" : [0]}"]
+//			"data2" : ["{"source1" : [1, 2]}", "{"source2" : [0]}"]
+//			"data3" : ["{"source2" : [1]}"]
 //		}
 func (p *SimpleProcessor) ProcessAndInsertString(data map[string]string) error {
 	log.Debug().
@@ -87,5 +90,5 @@ func buildIndexForOneSource(fn string, src []string) map[string]*Index {
 
 // GetCollectionName returns the name of the collection specified for this processor.
 func (p *SimpleProcessor) GetCollectionName() string {
-	return p.repo.GetCollectionName()
+	return p.colName
 }

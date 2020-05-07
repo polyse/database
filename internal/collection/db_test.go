@@ -38,7 +38,7 @@ func (cts *repositoryTestSuite) SetupTest() {
 	if err != nil {
 		panic(err)
 	}
-	repo := NewNutRepo(Name(nutColl), nutsDb)
+	repo := NewNutRepo(BucketName(nutColl), nutsDb)
 	cts.repo = repo
 	cts.nutsDb = nutsDb
 }
@@ -56,10 +56,6 @@ func (cts *repositoryTestSuite) TestConnection_NewConnection() {
 	cts.DirExists(dbDir)
 }
 
-func (cts *repositoryTestSuite) TestNutsRepository_GetCollectionName() {
-	cts.Equal(nutColl, cts.repo.GetCollectionName())
-}
-
 func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
 	saveData := map[string][]ByteArr{
 		"test": {
@@ -71,7 +67,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
 	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
 			key := []byte("test")
-			bucket := cts.repo.GetCollectionName()
+			bucket := nutColl
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
@@ -101,7 +97,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
 	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
 			key := []byte("test1")
-			bucket := cts.repo.GetCollectionName()
+			bucket := nutColl
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
@@ -125,7 +121,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
 	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
 			key := []byte("test1")
-			bucket := cts.repo.GetCollectionName()
+			bucket := nutColl
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {

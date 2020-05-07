@@ -7,20 +7,14 @@ import (
 	"github.com/xujiajun/nutsdb"
 )
 
-var (
-	dataCollectionPrefix = "dc-"
-)
-
 // Repository interface describes the basic methods for obtaining and modifying data in a database.
 type Repository interface {
 	Save(ent map[string][]ByteArr) error
-	GetCollectionName() string
 }
 
 // NutsRepository is repository interface implementation for the NutsDB database.
 type NutsRepository struct {
 	db         *nutsdb.DB
-	colName    string
 	bucketName string
 	l          zerolog.Logger
 }
@@ -31,26 +25,20 @@ type Config struct {
 }
 
 // CollectionName sets the name for the collection to be contained in the repository.
-type Name string
+type BucketName string
 
 type ByteArr interface {
 	GetBytes() []byte
 }
 
 // NewNutRepo function-constructor to NutsRepository.
-func NewNutRepo(colName Name, db *nutsdb.DB) *NutsRepository {
+func NewNutRepo(bucketName BucketName, db *nutsdb.DB) *NutsRepository {
 	l := log.
 		With().
-		Str("collection name", string(colName)).
-		Str("data collection prefix", dataCollectionPrefix).
+		Str("collection name", string(bucketName)).
 		Logger()
 	l.Debug().Msg("initialize data repository")
-	return &NutsRepository{db: db, colName: string(colName), l: l, bucketName: dataCollectionPrefix + string(colName)}
-}
-
-// GetCollectionName returns the name of the collection specified for this repository.
-func (nr *NutsRepository) GetCollectionName() string {
-	return nr.colName
+	return &NutsRepository{db: db, l: l, bucketName: string(bucketName)}
 }
 
 // Save saves data to the collection of this repository.

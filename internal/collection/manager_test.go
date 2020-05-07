@@ -13,8 +13,10 @@ import (
 
 func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 	type fields struct {
-		filters []filters.Filter
-		repo    Repository
+		filters   []filters.Filter
+		colName   string
+		tokenizer filters.Tokenizer
+		repo      Repository
 	}
 	tests := []struct {
 		name   string
@@ -24,16 +26,18 @@ func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 		{
 			name: "Normal Test",
 			fields: fields{
-				repo: NewNutRepo("testCollection", nil),
+				colName: nutColl,
 			},
-			want: "testCollection",
+			want: nutColl,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			p := &SimpleProcessor{
-				filters: tt.fields.filters,
-				repo:    tt.fields.repo,
+				filters:   tt.fields.filters,
+				colName:   tt.fields.colName,
+				repo:      tt.fields.repo,
+				tokenizer: tt.fields.tokenizer,
 			}
 			if got := p.GetCollectionName(); got != tt.want {
 				t.Errorf("GetCollectionName() = %v, want %v", got, tt.want)
@@ -61,7 +65,13 @@ func (pts *processorTestSuite) SetupTest() {
 		On("Save", mock.Anything).
 		Return(nil)
 
-	pts.pr = NewSimpleProcessor(testRepo, filters.FilterText, filters.StemmAndToLower, filters.StopWords)
+	pts.pr = NewSimpleProcessor(
+		testRepo,
+		Name(nutColl),
+		filters.FilterText,
+		filters.StemmAndToLower,
+		filters.StopWords,
+	)
 	pts.tr = testRepo
 }
 
@@ -114,6 +124,7 @@ func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors()
 	pts.prm.AddProcessor(
 		NewSimpleProcessor(
 			NewNutRepo("testCollection3", nil),
+			"testCollection3",
 			filters.FilterText,
 			filters.StemmAndToLower,
 			filters.StopWords,
