@@ -9,12 +9,6 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ProcessorManager interface designed to manage a set of different processors for a different collections.
-type ProcessorManager interface {
-	AddProcessor(proc ...Processor)
-	ProcessAndInsertString(data map[string]string, colName string) error
-}
-
 // SimpleProcessorManager structure a simple implementation of the ProcessManager interface
 // is a processor map, where the key is the name of the collection and the value is the processor itself.
 type SimpleProcessorManager struct {
@@ -36,7 +30,10 @@ func NewSimpleProcessorManagerWithProc(proc Processor) *SimpleProcessorManager {
 
 // AddProcessor adding more processor to manager.
 func (spm *SimpleProcessorManager) AddProcessor(proc ...Processor) {
-	log.Debug().Interface("processors", proc).Msg("adding processors")
+	for i := range proc {
+		log.Debug().Str("processor collection", proc[i].GetCollectionName()).Msg("adding processors")
+	}
+
 	spm.Lock()
 	defer spm.Unlock()
 	for i := range proc {

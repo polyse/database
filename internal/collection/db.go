@@ -9,7 +9,7 @@ import (
 
 // Repository interface describes the basic methods for obtaining and modifying data in a database.
 type Repository interface {
-	Save(ent map[string][]string) error
+	Save(ent map[string][]ByteArr) error
 	GetCollectionName() string
 }
 
@@ -28,6 +28,10 @@ type Config struct {
 // CollectionName sets the name for the collection to be contained in the repository.
 type Name string
 
+type ByteArr interface {
+	GetBytes() []byte
+}
+
 // NewNutRepo function-constructor to NutsRepository.
 func NewNutRepo(colName Name, db *nutsdb.DB) *NutsRepository {
 	l := log.With().Str("collection name", string(colName)).Logger()
@@ -41,7 +45,7 @@ func (nr *NutsRepository) GetCollectionName() string {
 }
 
 // Save saves data to the collection of this repository.
-func (nr *NutsRepository) Save(ent map[string][]string) error {
+func (nr *NutsRepository) Save(ent map[string][]ByteArr) error {
 
 	nr.l.Debug().Interface("data", ent).Msg("start inserting data")
 
@@ -50,12 +54,11 @@ func (nr *NutsRepository) Save(ent map[string][]string) error {
 			vals := ent[i]
 			data := make([][]byte, 0, len(vals))
 			for j := range vals {
-				data = append(data, []byte(vals[j]))
+				data = append(data, vals[j].GetBytes())
 			}
 			if err := tx.SAdd(nr.colName, []byte(i), data...); err != nil {
 				nr.l.Err(err).
 					Str("key", i).
-					Strs("values", ent[i]).
 					Msg("can not SADD to database")
 				if errC := tx.Rollback(); errC != nil {
 					nr.l.Err(err).Msg("can not rollback transaction")

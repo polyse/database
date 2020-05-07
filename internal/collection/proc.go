@@ -22,16 +22,17 @@ type SimpleProcessor struct {
 }
 
 type Index struct {
-	token string
-	pos   []int
+	source string
+	pos    []int
 }
 
-func (i *Index) String() string {
-	_, err := json.Marshal(i)
+func (i *Index) GetBytes() []byte {
+	b, err := json.Marshal(i)
 	if err != nil {
 		log.Err(err).Interface("index", Index{}).Msg("can not marshall data")
+		return make([]byte, 0)
 	}
-	return ""
+	return b
 }
 
 // NewProcessor function-constructor to SimpleProcessor
@@ -56,20 +57,32 @@ func NewSimpleProcessor(repo Repository, tokenizer filters.Tokenizer, textFilter
 func (p *SimpleProcessor) ProcessAndInsertString(data map[string]string) error {
 	log.Debug().
 		Str("collection in processor", p.GetCollectionName()).
-		Interface("filters", p.filters).
 		Msg("processing data")
-	parsed := make(map[string][]string)
+	parsed := make(map[string][]ByteArr)
 	for k := range data {
 		clearText := p.tokenizer(data[k], p.filters...)
-		for i := range clearText {
-			if parsed[clearText[i]] == nil {
-				parsed[clearText[i]] = []string{k}
+		sourceMap := buildIndexForOneSource(k, clearText)
+		for i := range sourceMap {
+			if parsed[i] == nil {
+				parsed[i] = []ByteArr{sourceMap[i]}
 			} else {
-				parsed[clearText[i]] = append(parsed[clearText[i]], k)
+				parsed[i] = append(parsed[i], sourceMap[i])
 			}
 		}
 	}
 	return p.repo.Save(parsed)
+}
+
+func buildIndexForOneSource(fn string, src []string) map[string]*Index {
+	sourceMap := make(map[string]*Index)
+	for i := range src {
+		if sourceMap[src[i]] == nil {
+			sourceMap[src[i]] = &Index{fn, []int{i}}
+		} else {
+			sourceMap[src[i]].pos = append(sourceMap[src[i]].pos, i)
+		}
+	}
+	return sourceMap
 }
 
 // GetCollectionName returns the name of the collection specified for this processor.

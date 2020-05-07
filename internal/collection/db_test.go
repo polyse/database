@@ -13,6 +13,14 @@ var (
 	nutColl = "testCollection"
 )
 
+type testByte struct {
+	str string
+}
+
+func (tb *testByte) GetBytes() []byte {
+	return []byte(tb.str)
+}
+
 type repositoryTestSuite struct {
 	suite.Suite
 	repo   Repository
@@ -53,10 +61,10 @@ func (cts *repositoryTestSuite) TestNutsRepository_GetCollectionName() {
 }
 
 func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
-	saveData := map[string][]string{
+	saveData := map[string][]ByteArr{
 		"test": {
-			"data1",
-			"data2",
+			&testByte{str: "data1"},
+			&testByte{str: "data2"},
 		},
 	}
 	cts.NoError(cts.repo.Save(saveData))
@@ -80,13 +88,13 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
 }
 
 func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
-	saveData := map[string][]string{
+	saveData := map[string][]ByteArr{
 		"test0": {
-			"data0-0",
-			"data0-1",
+			&testByte{"data0-0"},
+			&testByte{"data0-1"},
 		},
 		"test1": {
-			"data1-0",
+			&testByte{"data1-0"},
 		},
 	}
 	cts.NoError(cts.repo.Save(saveData))
@@ -108,9 +116,9 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
 		panic(err)
 	}
 
-	cts.NoError(cts.repo.Save(map[string][]string{
+	cts.NoError(cts.repo.Save(map[string][]ByteArr{
 		"test1": {
-			"data1-1",
+			&testByte{"data1-1"},
 		},
 	}))
 
