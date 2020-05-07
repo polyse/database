@@ -5,6 +5,11 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xujiajun/nutsdb"
+	"strings"
+)
+
+var (
+	dataCollectionPrefix = "dc-"
 )
 
 // Repository interface describes the basic methods for obtaining and modifying data in a database.
@@ -34,14 +39,21 @@ type ByteArr interface {
 
 // NewNutRepo function-constructor to NutsRepository.
 func NewNutRepo(colName Name, db *nutsdb.DB) *NutsRepository {
-	l := log.With().Str("collection name", string(colName)).Logger()
-	l.Debug().Msg("initialize repository")
-	return &NutsRepository{db: db, colName: string(colName), l: l}
+	l := log.
+		With().
+		Str("collection name", dataCollectionPrefix+string(colName)).
+		Str("data collection prefix", dataCollectionPrefix).
+		Logger()
+	l.Debug().Msg("initialize data repository")
+	return &NutsRepository{db: db, colName: dataCollectionPrefix + string(colName), l: l}
 }
 
 // GetCollectionName returns the name of the collection specified for this repository.
 func (nr *NutsRepository) GetCollectionName() string {
-	return nr.colName
+	if strings.HasPrefix(nr.colName, dataCollectionPrefix) {
+		return nr.colName[len(dataCollectionPrefix):len(nr.colName)]
+	}
+	return "" //Как лучше обработать эту ситуацию?
 }
 
 // Save saves data to the collection of this repository.
@@ -56,7 +68,7 @@ func (nr *NutsRepository) Save(ent map[string][]ByteArr) error {
 			for j := range vals {
 				data = append(data, vals[j].GetBytes())
 			}
-			if err := tx.SAdd(nr.colName, []byte(i), data...); err != nil {
+			if err := tx.SAdd(dataCollectionPrefix+nr.colName, []byte(i), data...); err != nil {
 				nr.l.Err(err).
 					Str("key", i).
 					Msg("can not SADD to database")
