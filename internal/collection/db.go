@@ -5,7 +5,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xujiajun/nutsdb"
-	"strings"
 )
 
 var (
@@ -20,9 +19,10 @@ type Repository interface {
 
 // NutsRepository is repository interface implementation for the NutsDB database.
 type NutsRepository struct {
-	db      *nutsdb.DB
-	colName string
-	l       zerolog.Logger
+	db         *nutsdb.DB
+	colName    string
+	bucketName string
+	l          zerolog.Logger
 }
 
 // Config describes the basic database configuration.
@@ -41,19 +41,16 @@ type ByteArr interface {
 func NewNutRepo(colName Name, db *nutsdb.DB) *NutsRepository {
 	l := log.
 		With().
-		Str("collection name", dataCollectionPrefix+string(colName)).
+		Str("collection name", string(colName)).
 		Str("data collection prefix", dataCollectionPrefix).
 		Logger()
 	l.Debug().Msg("initialize data repository")
-	return &NutsRepository{db: db, colName: dataCollectionPrefix + string(colName), l: l}
+	return &NutsRepository{db: db, colName: string(colName), l: l, bucketName: dataCollectionPrefix + string(colName)}
 }
 
 // GetCollectionName returns the name of the collection specified for this repository.
 func (nr *NutsRepository) GetCollectionName() string {
-	if strings.HasPrefix(nr.colName, dataCollectionPrefix) {
-		return nr.colName[len(dataCollectionPrefix):len(nr.colName)]
-	}
-	return "" //Как лучше обработать эту ситуацию?
+	return nr.colName
 }
 
 // Save saves data to the collection of this repository.
@@ -68,7 +65,7 @@ func (nr *NutsRepository) Save(ent map[string][]ByteArr) error {
 			for j := range vals {
 				data = append(data, vals[j].GetBytes())
 			}
-			if err := tx.SAdd(dataCollectionPrefix+nr.colName, []byte(i), data...); err != nil {
+			if err := tx.SAdd(nr.bucketName, []byte(i), data...); err != nil {
 				nr.l.Err(err).
 					Str("key", i).
 					Msg("can not SADD to database")
