@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/go-playground/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
@@ -21,6 +22,14 @@ type App struct {
 type AppConfig struct {
 	NetInterface string
 	Timeout      time.Duration
+}
+
+type CustomValidator struct {
+	validator *validator.Validate
+}
+
+func (cv *CustomValidator) Validate(i interface{}) error {
+	return cv.validator.Struct(i)
 }
 
 func (ac *AppConfig) checkConfig() {
@@ -42,10 +51,11 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 	appCfg.checkConfig()
 
 	e := echo.New()
-
+	e.Validator = &CustomValidator{validator: validator.New()}
 	e.Use(middleware.Logger())
 
 	e.GET("/healthcheck", handleHealthcheck)
+	e.POST("/default/documents", handleAddDocuments)
 
 	// log.Debug().Strs("endpoints", []string{"GET /healthcheck"}).Msg("endpoints registered")
 
@@ -59,6 +69,34 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 
 func handleHealthcheck(c echo.Context) error {
 	encodedJSON := []byte(`{"message": "200 OK"}`) // Encoded JSON from external source
+	return c.JSONBlob(http.StatusOK, encodedJSON)
+}
+
+type Documents struct {
+	Title   string `json:"title" validate:"required"`
+	URL     string `json:"url" validate:"required"`
+	Content string `json:"content" validate:"required"`
+}
+
+func newDocuments() *[]Documents {
+	return &[]Documents{}
+}
+
+func handleAddDocuments(c echo.Context) error {
+	documents := newDocuments()
+	if err := c.Bind(documents); err != nil {
+		return err
+	}
+	for _, document := range *documents {
+		if err := c.Validate(document); err != nil {
+			encodedJSON := []byte(`{"message": "400 Bad request"}`)
+			return c.JSONBlob(http.StatusOK, encodedJSON)
+		}
+	}
+
+	// here will be sending documents to bd
+
+	encodedJSON := []byte(`{"message": "200 OK"}`)
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
