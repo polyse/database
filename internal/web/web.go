@@ -24,6 +24,16 @@ type AppConfig struct {
 	Timeout      time.Duration
 }
 
+type Document struct {
+	Title   string `json:"title" validate:"required"`
+	URL     string `json:"url" validate:"required"`
+	Content string `json:"content" validate:"required"`
+}
+
+func newDocuments() *[]Document {
+	return &[]Document{}
+}
+
 type CustomValidator struct {
 	validator *validator.Validate
 }
@@ -55,7 +65,8 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 	e.Use(middleware.Logger())
 
 	e.GET("/healthcheck", handleHealthcheck)
-	e.POST("/default/documents", handleAddDocuments)
+	e.GET("/api/:collection/documents", handleSearch)
+	e.POST("/api/:collection/documents", handleAddDocuments)
 
 	// log.Debug().Strs("endpoints", []string{"GET /healthcheck"}).Msg("endpoints registered")
 
@@ -72,17 +83,21 @@ func handleHealthcheck(c echo.Context) error {
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
-type Documents struct {
-	Title   string `json:"title" validate:"required"`
-	URL     string `json:"url" validate:"required"`
-	Content string `json:"content" validate:"required"`
-}
+func handleSearch(c echo.Context) error {
+	collection := c.Param("collection")
+	query := c.QueryParam("q")
+	if len(query) == 0 {
+		encodedJSON := []byte(`{"message": "400 Bad request"}`)
+		return c.JSONBlob(http.StatusOK, encodedJSON)
+	}
+	// limit := c.QueryParam("limit")
 
-func newDocuments() *[]Documents {
-	return &[]Documents{}
+	encodedJSON := []byte(`{"message": "200 OK"}`) // Encoded JSON from external source
+	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
 func handleAddDocuments(c echo.Context) error {
+	// collection := c.Param("collection")
 	documents := newDocuments()
 	if err := c.Bind(documents); err != nil {
 		return err
