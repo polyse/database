@@ -7,9 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi"
-	"github.com/go-chi/chi/middleware"
-	"github.com/go-chi/render"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
 )
 
@@ -42,29 +41,25 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 
 	appCfg.checkConfig()
 
-	r := chi.NewRouter()
+	e := echo.New()
 
-	r.Use(middleware.Timeout(appCfg.Timeout))
-	r.Use(logMiddleware)
+	e.Use(middleware.Logger())
 
-	r.Route("/", func(r chi.Router) {
-		r.Use(render.SetContentType(render.ContentTypeJSON))
-		r.Get("/healthcheck", func(w http.ResponseWriter, r *http.Request) {
-			if _, err := w.Write([]byte("{\"message\" : \"200 OK\"}")); err != nil {
-				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-				log.Err(err).Msg("can not write data to response")
-			}
-		})
-	})
+	e.GET("/healthcheck", handleHealthcheck)
 
-	log.Debug().Strs("endpoints", []string{"GET /healthcheck"}).Msg("endpoints registered")
+	// log.Debug().Strs("endpoints", []string{"GET /healthcheck"}).Msg("endpoints registered")
 
 	srv := &http.Server{
 		Addr:    appCfg.NetInterface,
-		Handler: r,
+		Handler: e,
 	}
 	a := &App{srv: srv}
 	return a, a.Close(ctx), nil
+}
+
+func handleHealthcheck(c echo.Context) error {
+	encodedJSON := []byte(`{"message": "200 OK"}`) // Encoded JSON from external source
+	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
 // Run start the server.
