@@ -70,7 +70,7 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 	e.GET("/api/:collection/documents", handleSearch)
 	e.POST("/api/:collection/documents", handleAddDocuments)
 
-	// log.Debug().Strs("endpoints", []string{"GET /healthcheck"}).Msg("endpoints registered")
+	log.Debug().Msg("endpoints registered")
 
 	srv := &http.Server{
 		Addr:    appCfg.NetInterface,
@@ -81,15 +81,21 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 }
 
 func handleHealthcheck(c echo.Context) error {
+	log.Debug().Msg("handleHealthcheck run")
 	return Ok(c)
 }
 
 func handleSearch(c echo.Context) error {
-	// collection := c.Param("collection")
 	var request SearchRequest
 	var err error
+
 	request.Query = c.QueryParam("q")
 	limit := c.QueryParam("limit")
+
+	collection := c.Param("collection")
+
+	log.Debug().Str("param collection", collection).Str("query q", request.Query).Str("query limit", limit).Msg("handleSearch run")
+
 	if len(limit) != 0 {
 		request.Limit, err = strconv.Atoi(limit)
 		if err != nil {
@@ -98,7 +104,7 @@ func handleSearch(c echo.Context) error {
 	} else {
 		request.Limit = 100
 	}
-	if err := c.Validate(request); err != nil {
+	if err = c.Validate(request); err != nil {
 		return Bad(c)
 	}
 
@@ -108,7 +114,10 @@ func handleSearch(c echo.Context) error {
 }
 
 func handleAddDocuments(c echo.Context) error {
-	// collection := c.Param("collection")
+	collection := c.Param("collection")
+
+	log.Debug().Str("param collection", collection).Msg("handleSearch run")
+
 	var document Document
 	if err := c.Bind(&document); err != nil {
 		return err
