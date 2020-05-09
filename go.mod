@@ -9,6 +9,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/go-playground/validator/v10 v10.2.0
 	github.com/google/wire v0.4.0
 	github.com/kljensen/snowball v0.6.0
 	github.com/kr/pretty v0.2.0 // indirect

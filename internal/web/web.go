@@ -5,9 +5,10 @@ package web
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/go-playground/validator"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
@@ -26,8 +27,13 @@ type AppConfig struct {
 
 type Document struct {
 	Title   string `json:"title" validate:"required"`
-	URL     string `json:"url" validate:"required"`
+	URL     string `json:"url" validate:"required,url"`
 	Content string `json:"content" validate:"required"`
+}
+
+type SearchRequest struct {
+	Query string `validate:"required"`
+	Limit int    `validate:"gt=0"`
 }
 
 func newDocuments() *[]Document {
@@ -79,21 +85,30 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 }
 
 func handleHealthcheck(c echo.Context) error {
-	encodedJSON := []byte(`{"message": "200 OK"}`) // Encoded JSON from external source
-	return c.JSONBlob(http.StatusOK, encodedJSON)
+	return Ok(c)
 }
 
 func handleSearch(c echo.Context) error {
-	collection := c.Param("collection")
-	query := c.QueryParam("q")
-	if len(query) == 0 {
-		encodedJSON := []byte(`{"message": "400 Bad request"}`)
-		return c.JSONBlob(http.StatusOK, encodedJSON)
+	// collection := c.Param("collection")
+	var request SearchRequest
+	var err error
+	request.Query = c.QueryParam("q")
+	limit := c.QueryParam("limit")
+	if len(limit) != 0 {
+		request.Limit, err = strconv.Atoi(limit)
+		if err != nil {
+			return Bad(c)
+		}
+	} else {
+		request.Limit = 100
 	}
-	// limit := c.QueryParam("limit")
+	if err := c.Validate(request); err != nil {
+		return Bad(c)
+	}
 
-	encodedJSON := []byte(`{"message": "200 OK"}`) // Encoded JSON from external source
-	return c.JSONBlob(http.StatusOK, encodedJSON)
+	// here will be searching
+
+	return Ok(c)
 }
 
 func handleAddDocuments(c echo.Context) error {
@@ -104,14 +119,21 @@ func handleAddDocuments(c echo.Context) error {
 	}
 	for _, document := range *documents {
 		if err := c.Validate(document); err != nil {
-			encodedJSON := []byte(`{"message": "400 Bad request"}`)
-			return c.JSONBlob(http.StatusOK, encodedJSON)
+			return Bad(c)
 		}
 	}
 
 	// here will be sending documents to bd
 
+	return Ok(c)
+}
+
+func Ok(c echo.Context) error {
 	encodedJSON := []byte(`{"message": "200 OK"}`)
+	return c.JSONBlob(http.StatusOK, encodedJSON)
+}
+func Bad(c echo.Context) error {
+	encodedJSON := []byte(`{"message": "400 Bad request"}`)
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
