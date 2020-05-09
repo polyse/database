@@ -36,10 +36,6 @@ type SearchRequest struct {
 	Limit int    `validate:"gt=0"`
 }
 
-func newDocuments() *[]Document {
-	return &[]Document{}
-}
-
 type CustomValidator struct {
 	validator *validator.Validate
 }
@@ -113,17 +109,15 @@ func handleSearch(c echo.Context) error {
 
 func handleAddDocuments(c echo.Context) error {
 	// collection := c.Param("collection")
-	documents := newDocuments()
-	if err := c.Bind(documents); err != nil {
+	var document Document
+	if err := c.Bind(&document); err != nil {
 		return err
 	}
-	for _, document := range *documents {
-		if err := c.Validate(document); err != nil {
-			return Bad(c)
-		}
+	if err := c.Validate(document); err != nil {
+		return Bad(c)
 	}
 
-	// here will be sending documents to bd
+	// here will be sending document to bd
 
 	return Ok(c)
 }
