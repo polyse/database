@@ -35,7 +35,7 @@ func initConnection(cfg collection.Config) (*nutsdb.DB, func(), error) {
 	log.Info().Msg("connection opened")
 	return nutsDb, func() {
 		log.Info().Msg("start closing database connection")
-		if err := nutsDb.Merge(); err != nil {
+		if err = nutsDb.Merge(); err != nil {
 			log.Err(err).Msg("can not merge database")
 		}
 		if err = nutsDb.Close(); err != nil {
