@@ -54,7 +54,7 @@ type RawData struct {
 	Data string `json:"data"`
 }
 
-func (i *wordInfo) GetBytes() []byte {
+func (i *wordInfo) toJson() []byte {
 	b, err := json.Marshal(i)
 	if err != nil {
 		log.Err(err).Interface("index", wordInfo{}).Msg("can not marshall data")
@@ -163,7 +163,7 @@ func (p *SimpleProcessor) saveData(ent map[string][]*wordInfo) error {
 			vals := ent[i]
 			data := make([][]byte, 0, len(vals))
 			for j := range vals {
-				data = append(data, vals[j].GetBytes())
+				data = append(data, vals[j].toJson())
 			}
 			if err := tx.SAdd(p.bucketName, []byte(i), data...); err != nil {
 				p.l.Err(err).
