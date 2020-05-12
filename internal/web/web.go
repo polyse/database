@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/rs/zerolog/log"
 )
 
@@ -33,7 +32,7 @@ type Document struct {
 
 type SearchRequest struct {
 	Query string `validate:"required"`
-	Limit int    `validate:"gte=1"`
+	Limit int    `validate:"gte=0"`
 }
 
 type Validator struct {
@@ -64,7 +63,7 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 
 	e := echo.New()
 	e.Validator = &Validator{validator: validator.New()}
-	e.Use(middleware.Logger())
+	e.Use(logMiddleware())
 	e.HTTPErrorHandler = httpErrorHandler
 
 	e.GET("/healthcheck", handleHealthcheck)
@@ -93,24 +92,16 @@ func handleSearch(c echo.Context) error {
 	var err error
 
 	request.Query = c.QueryParam("q")
-	limit := c.QueryParam("limit")
+	request.Limit, _ = strconv.Atoi(c.QueryParam("limit"))
 
 	collection := c.Param("collection")
 
 	log.Debug().
-		Str("param collection", collection).
-		Str("query q", request.Query).
-		Str("query limit", limit).
+		Str("collection", collection).
+		Str("q", request.Query).
+		Int("limit", request.Limit).
 		Msg("handleSearch run")
 
-	if len(limit) != 0 {
-		request.Limit, err = strconv.Atoi(limit)
-		if err != nil {
-			return err
-		}
-	} else {
-		request.Limit = 100
-	}
 	if err = c.Validate(request); err != nil {
 		return err
 	}
@@ -124,7 +115,7 @@ func handleAddDocuments(c echo.Context) error {
 	collection := c.Param("collection")
 
 	log.Debug().
-		Str("param collection", collection).
+		Str("collection", collection).
 		Msg("handleSearch run")
 
 	var document Document
@@ -168,18 +159,21 @@ func (a *App) Run() error {
 	return nil
 }
 
-func logMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-		next.ServeHTTP(w, r)
+func logMiddleware() echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) (err error) {
+			start := time.Now()
+			// next.ServeHTTP(w, r)
 
-		log.Debug().
-			Str("method", r.Method).
-			Str("remote", r.RemoteAddr).
-			Str("path", r.URL.Path).
-			Int("duration", int(time.Since(start))).
-			Msgf("called url %s", r.URL.Path)
-	})
+			log.Debug().
+				// Str("method", r.Method).
+				// Str("remote", r.RemoteAddr).
+				// Str("path", r.URL.Path).
+				Int("duration", int(time.Since(start))).
+				Msgf("called url %s", "r.URL.Path")
+			return next(c)
+		}
+	}
 }
 
 // Close smoothly stops the server with the completion of all network connections with a specified timeout.
