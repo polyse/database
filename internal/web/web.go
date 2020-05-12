@@ -163,14 +163,14 @@ func logMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {
 			start := time.Now()
-			// next.ServeHTTP(w, r)
 
 			log.Debug().
-				// Str("method", r.Method).
-				// Str("remote", r.RemoteAddr).
-				// Str("path", r.URL.Path).
+				Str("method", c.Request().Method).
+				Str("remote", c.Request().RemoteAddr).
+				Str("path", c.Path()).
 				Int("duration", int(time.Since(start))).
-				Msgf("called url %s", "r.URL.Path")
+				Msgf("called url %s", c.Request().URL)
+
 			return next(c)
 		}
 	}
