@@ -89,26 +89,26 @@ func NewSimpleProcessor(
 // and also saves them in a given collection of data bases.
 //
 // Input format:
-// 		[
-//          {
-//				"url"   : "source1",
-//				"date"  : "12.05.2020"
-//				"title" : "test title"
-//				"data"  : "data1 data2 data3"
-//          },
-//			{
-//				"url"   : "source2",
-//				"date"  : "11.06.2020"
-//				"title" : "test second title"
-//				"data"  : "data2 data3"
-//          }
-// 		]
+//    [
+//      {
+//        "url"   : "source1",
+//        "date"  : "12.05.2020"
+//        "title" : "test title"
+//        "data"  : "data1 data2 data3"
+//      },
+//      {
+//        "url"   : "source2",
+//        "date"  : "11.06.2020"
+//        "title" : "test second title"
+//        "data"  : "data2 data3"
+//      }
+//    ]
 // Format after processing:
-// 		{
-//			"data1" : ["{"url" : "source1", "pos" : [0]}"]
-//			"data2" : ["{"url" : "source1", "pos" : [1, 2]}", "{"url" : "source2", "pos" : [0]}"]
-//			"data3" : ["{"url" : "source2", "pos" : [1]}"]
-//		}
+//    {
+//      "data1" : ["{"url" : "source1", "pos" : [0]}"],
+//      "data2" : ["{"url" : "source1", "pos" : [1, 2]}", "{"url" : "source2", "pos" : [0]}"],
+//      "data3" : ["{"url" : "source2", "pos" : [1]}"],
+//    }
 func (p *SimpleProcessor) ProcessAndInsertString(data []RawData) error {
 	log.Debug().
 		Str("collection in processor", p.GetCollectionName()).
