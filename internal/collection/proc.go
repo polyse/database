@@ -57,13 +57,13 @@ type WordInfo struct {
 	Pos []int
 }
 
-func (i *WordInfo) toJson() []byte {
+func (i *WordInfo) toJson() ([]byte, error) {
 	b, err := json.Marshal(i)
 	if err != nil {
-		log.Err(err).Interface("index", WordInfo{}).Msg("can not marshall data")
-		return make([]byte, 0)
+		log.Err(err).Interface("index", i).Msg("can not marshall data")
+		return nil, err
 	}
-	return b
+	return b, err
 }
 
 // Name is type to describe collection name in database
@@ -167,19 +167,26 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 			vals := ent[i]
 			data := make([][]byte, 0, len(vals))
 			for j := range vals {
-				data = append(data, vals[j].toJson())
+				if b, err := vals[j].toJson(); err != nil {
+					return p.rollbackTransaction(tx, err)
+				} else {
+					data = append(data, b)
+				}
 			}
 			if err := tx.SAdd(p.bucketName, []byte(i), data...); err != nil {
 				p.l.Err(err).
 					Str("key", i).
 					Msg("can not SADD to database")
-				if errC := tx.Rollback(); errC != nil {
-					p.l.Err(err).Msg("can not rollback transaction")
-				}
-				return err
+				return p.rollbackTransaction(tx, err)
 			}
 		}
 		return nil
 	})
+}
 
+func (p *SimpleProcessor) rollbackTransaction(tx *nutsdb.Tx, err error) error {
+	if errC := tx.Rollback(); errC != nil {
+		p.l.Err(err).Msg("can not rollback transaction")
+	}
+	return err
 }
