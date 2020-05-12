@@ -33,14 +33,14 @@ type Document struct {
 
 type SearchRequest struct {
 	Query string `validate:"required"`
-	Limit int    `validate:"gt=0"`
+	Limit int    `validate:"gte=1"`
 }
 
-type CustomValidator struct {
+type Validator struct {
 	validator *validator.Validate
 }
 
-func (cv *CustomValidator) Validate(i interface{}) error {
+func (cv *Validator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
@@ -63,12 +63,15 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 	appCfg.checkConfig()
 
 	e := echo.New()
-	e.Validator = &CustomValidator{validator: validator.New()}
+	e.Validator = &Validator{validator: validator.New()}
 	e.Use(middleware.Logger())
+	e.HTTPErrorHandler = httpErrorHandler
 
 	e.GET("/healthcheck", handleHealthcheck)
-	e.GET("/api/:collection/documents", handleSearch)
-	e.POST("/api/:collection/documents", handleAddDocuments)
+
+	g := e.Group("/api")
+	g.GET("/:collection/documents", handleSearch)
+	g.POST("/:collection/documents", handleAddDocuments)
 
 	log.Debug().Msg("endpoints registered")
 
@@ -94,18 +97,22 @@ func handleSearch(c echo.Context) error {
 
 	collection := c.Param("collection")
 
-	log.Debug().Str("param collection", collection).Str("query q", request.Query).Str("query limit", limit).Msg("handleSearch run")
+	log.Debug().
+		Str("param collection", collection).
+		Str("query q", request.Query).
+		Str("query limit", limit).
+		Msg("handleSearch run")
 
 	if len(limit) != 0 {
 		request.Limit, err = strconv.Atoi(limit)
 		if err != nil {
-			return Bad(c)
+			return err
 		}
 	} else {
 		request.Limit = 100
 	}
 	if err = c.Validate(request); err != nil {
-		return Bad(c)
+		return err
 	}
 
 	// here will be searching
@@ -116,14 +123,16 @@ func handleSearch(c echo.Context) error {
 func handleAddDocuments(c echo.Context) error {
 	collection := c.Param("collection")
 
-	log.Debug().Str("param collection", collection).Msg("handleSearch run")
+	log.Debug().
+		Str("param collection", collection).
+		Msg("handleSearch run")
 
 	var document Document
 	if err := c.Bind(&document); err != nil {
 		return err
 	}
 	if err := c.Validate(document); err != nil {
-		return Bad(c)
+		return err
 	}
 
 	// here will be sending document to bd
@@ -135,9 +144,19 @@ func Ok(c echo.Context) error {
 	encodedJSON := []byte(`{"message": "200 OK"}`)
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
-func Bad(c echo.Context) error {
+
+func httpErrorHandler(err error, c echo.Context) {
+	log.Error().
+		Err(err).
+		Msg("")
+
 	encodedJSON := []byte(`{"message": "400 Bad request"}`)
-	return c.JSONBlob(http.StatusOK, encodedJSON)
+	err = c.JSONBlob(http.StatusOK, encodedJSON)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Msg("")
+	}
 }
 
 // Run start the server.
