@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	// "github.com/polyse/databaseinternal/collection"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -24,21 +25,35 @@ type AppConfig struct {
 	Timeout      time.Duration
 }
 
-type Document struct {
-	Title   string `json:"title" validate:"required"`
-	URL     string `json:"url" validate:"required,url"`
-	Content string `json:"content" validate:"required"`
+// Source structure for domain\article\site\source description
+type Source struct {
+	Date  time.Time `json:"date" validate:"required"`
+	Title string    `json:"title" validate:"required"`
 }
 
+// RawData structure for json data description
+type RawData struct {
+	Source `json:"source" validate:"required"`
+	Url    string `json:"url" validate:"required,url"`
+	Data   string `json:"data" validate:"required"`
+}
+
+type Documents struct {
+	Documents []RawData `json:"documents" validate:"required"`
+}
+
+// временно
 type SearchRequest struct {
 	Query string `validate:"required"`
 	Limit int    `validate:"gte=0"`
 }
 
+// Validator - to add custom validator in echo.
 type Validator struct {
 	validator *validator.Validate
 }
 
+// Validate add go-playground/validator in echo.
 func (cv *Validator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
@@ -84,7 +99,7 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 
 func handleHealthcheck(c echo.Context) error {
 	log.Debug().Msg("handleHealthcheck run")
-	return Ok(c)
+	return ok(c)
 }
 
 func handleSearch(c echo.Context) error {
@@ -108,7 +123,7 @@ func handleSearch(c echo.Context) error {
 
 	// here will be searching
 
-	return Ok(c)
+	return ok(c)
 }
 
 func handleAddDocuments(c echo.Context) error {
@@ -118,20 +133,21 @@ func handleAddDocuments(c echo.Context) error {
 		Str("collection", collection).
 		Msg("handleSearch run")
 
-	var document Document
-	if err := c.Bind(&document); err != nil {
+	var ds Documents
+	if err := c.Bind(&ds); err != nil {
 		return err
 	}
-	if err := c.Validate(document); err != nil {
+	if err := c.Validate(ds); err != nil {
+		log.Error().Err(err).Msg("")
 		return err
 	}
 
 	// here will be sending document to bd
 
-	return Ok(c)
+	return ok(c)
 }
 
-func Ok(c echo.Context) error {
+func ok(c echo.Context) error {
 	encodedJSON := []byte(`{"message": "200 OK"}`)
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
