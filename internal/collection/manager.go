@@ -43,7 +43,7 @@ func (spm *SimpleProcessorManager) AddProcessor(proc ...Processor) {
 
 // ProcessAndInsertString selects the necessary processor for this collection
 // and transfers data to it for subsequent processing and storage.
-func (spm *SimpleProcessorManager) ProcessAndInsertString(data map[string]string, colName string) error {
+func (spm *SimpleProcessorManager) ProcessAndInsertString(data []RawData, colName string) error {
 	log.Debug().Str("collection name", colName).Msg("manager, start inserting data")
 	spm.RLock()
 	val, ok := spm.processors[colName]

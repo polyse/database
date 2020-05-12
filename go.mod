@@ -8,6 +8,7 @@ require (
 	github.com/go-chi/render v1.0.1
 	github.com/google/wire v0.4.0
 	github.com/kljensen/snowball v0.6.0
+	github.com/pkg/errors v0.8.1
 	github.com/rs/zerolog v1.18.0
 	github.com/stretchr/objx v0.1.1 // indirect
 	github.com/stretchr/testify v1.5.1

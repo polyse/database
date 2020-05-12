@@ -14,10 +14,6 @@ var (
 	procSetter = wire.NewSet(
 		initDbConfig,
 		initConnection,
-		collection.NewNutRepo,
-		wire.Bind(
-			new(collection.Repository),
-			new(*collection.NutsRepository)),
 		initTokenizer,
 		initFilters,
 		collection.NewSimpleProcessor,
@@ -74,7 +70,7 @@ func main() {
 	closer.Bind(cancel)
 
 	log.Debug().Msg("starting db")
-	_, connCLoser, err := initProcessorManager(cfg, "default", "db-default")
+	_, connCLoser, err := initProcessorManager(cfg, "default")
 	closer.Bind(connCLoser)
 
 	log.Debug().Msg("starting web application")

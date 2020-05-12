@@ -27,16 +27,15 @@ func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
 	}, nil
 }
 
-func initProcessorManager(c *config, collName collection.Name, name collection.BucketName) (*collection.SimpleProcessorManager, func(), error) {
+func initProcessorManager(c *config, collName collection.Name) (*collection.SimpleProcessorManager, func(), error) {
 	collectionConfig := initDbConfig(c)
 	db, cleanup, err := initConnection(collectionConfig)
 	if err != nil {
 		return nil, nil, err
 	}
-	nutsRepository := collection.NewNutRepo(name, db)
 	tokenizer := initTokenizer()
 	v := initFilters()
-	simpleProcessor := collection.NewSimpleProcessor(nutsRepository, collName, tokenizer, v...)
+	simpleProcessor := collection.NewSimpleProcessor(db, collName, tokenizer, v...)
 	simpleProcessorManager := collection.NewSimpleProcessorManagerWithProc(simpleProcessor)
 	return simpleProcessorManager, func() {
 		cleanup()

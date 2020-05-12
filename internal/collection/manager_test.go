@@ -16,7 +16,6 @@ func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 		filters   []filters.Filter
 		colName   string
 		tokenizer filters.Tokenizer
-		repo      Repository
 	}
 	tests := []struct {
 		name   string
@@ -36,7 +35,6 @@ func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 			p := &SimpleProcessor{
 				filters:   tt.fields.filters,
 				colName:   tt.fields.colName,
-				repo:      tt.fields.repo,
 				tokenizer: tt.fields.tokenizer,
 			}
 			if got := p.GetCollectionName(); got != tt.want {
