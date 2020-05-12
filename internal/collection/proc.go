@@ -33,36 +33,40 @@ type SimpleProcessor struct {
 	l          zerolog.Logger
 }
 
-type wordInfo struct {
-	Url string
-	Pos []int
-}
-
 // Config describes the basic database configuration.
 type Config struct {
 	File string
 }
 
+// Source structure for domain\article\site\source description
 type Source struct {
 	Date  time.Time `json:"date"`
 	Title string    `json:"title"`
 }
 
+// RawData structure for json data description
 type RawData struct {
 	Source
 	Url  string `json:"url"`
 	Data string `json:"data"`
 }
 
-func (i *wordInfo) toJson() []byte {
+// WordInfo structure for describing positions of tokens in the text at a given url
+type WordInfo struct {
+	Url string
+	Pos []int
+}
+
+func (i *WordInfo) toJson() []byte {
 	b, err := json.Marshal(i)
 	if err != nil {
-		log.Err(err).Interface("index", wordInfo{}).Msg("can not marshall data")
+		log.Err(err).Interface("index", WordInfo{}).Msg("can not marshall data")
 		return make([]byte, 0)
 	}
 	return b
 }
 
+// Name is type to describe collection name in database
 type Name string
 
 // NewProcessor function-constructor to SimpleProcessor
@@ -109,7 +113,7 @@ func (p *SimpleProcessor) ProcessAndInsertString(data []RawData) error {
 	log.Debug().
 		Str("collection in processor", p.GetCollectionName()).
 		Msg("processing data")
-	parsed := make(map[string][]*wordInfo)
+	parsed := make(map[string][]*WordInfo)
 	for k := range data {
 		if err := p.saveSource(data[k].Url, Source{Date: data[k].Date, Title: data[k].Title}); err != nil {
 			return errors.Wrapf(err, "can not save source %s", data[k].Url)
@@ -118,7 +122,7 @@ func (p *SimpleProcessor) ProcessAndInsertString(data []RawData) error {
 		sourceMap := buildIndexForOneSource(data[k].Url, clearText)
 		for i := range sourceMap {
 			if parsed[i] == nil {
-				parsed[i] = []*wordInfo{sourceMap[i]}
+				parsed[i] = []*WordInfo{sourceMap[i]}
 			} else {
 				parsed[i] = append(parsed[i], sourceMap[i])
 			}
@@ -132,11 +136,11 @@ func (p *SimpleProcessor) GetCollectionName() string {
 	return p.colName
 }
 
-func buildIndexForOneSource(src string, words []string) map[string]*wordInfo {
-	sourceMap := make(map[string]*wordInfo)
+func buildIndexForOneSource(src string, words []string) map[string]*WordInfo {
+	sourceMap := make(map[string]*WordInfo)
 	for i := range words {
 		if sourceMap[words[i]] == nil {
-			sourceMap[words[i]] = &wordInfo{Url: src, Pos: []int{i}}
+			sourceMap[words[i]] = &WordInfo{Url: src, Pos: []int{i}}
 		} else {
 			sourceMap[words[i]].Pos = append(sourceMap[words[i]].Pos, i)
 		}
@@ -154,7 +158,7 @@ func (p *SimpleProcessor) saveSource(key string, src Source) error {
 	})
 }
 
-func (p *SimpleProcessor) saveData(ent map[string][]*wordInfo) error {
+func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 
 	p.l.Debug().Interface("data", ent).Msg("start inserting data")
 
