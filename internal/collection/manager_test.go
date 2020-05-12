@@ -92,7 +92,13 @@ func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors()
 }
 
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_ProcessAndInsertString() {
-	assert.NoError(pts.T(), pts.prm.ProcessAndInsertString([]RawData{{Url: "test", Data: "data"}}, "testCollection"))
+	assert.NoError(
+		pts.T(),
+		pts.prm.ProcessAndInsertString(
+			"testCollection",
+			[]RawData{{Url: "test", Data: "data"}}...,
+		),
+	)
 	pts.tr.AssertCalled(pts.T(), "ProcessAndInsertString", []RawData{{Url: "test", Data: "data"}})
 	pts.tr2.AssertNotCalled(pts.T(), "ProcessAndInsertString", mock.Anything, mock.Anything)
 }
