@@ -2,12 +2,13 @@ package collection
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"github.com/xujiajun/nutsdb"
-	"time"
 )
 
 var (
@@ -33,8 +34,8 @@ type SimpleProcessor struct {
 }
 
 type wordInfo struct {
-	url string
-	pos []int
+	Url string
+	Pos []int
 }
 
 // Config describes the basic database configuration.
@@ -135,9 +136,9 @@ func buildIndexForOneSource(src string, words []string) map[string]*wordInfo {
 	sourceMap := make(map[string]*wordInfo)
 	for i := range words {
 		if sourceMap[words[i]] == nil {
-			sourceMap[words[i]] = &wordInfo{url: src, pos: []int{i}}
+			sourceMap[words[i]] = &wordInfo{Url: src, Pos: []int{i}}
 		} else {
-			sourceMap[words[i]].pos = append(sourceMap[words[i]].pos, i)
+			sourceMap[words[i]].Pos = append(sourceMap[words[i]].Pos, i)
 		}
 	}
 	return sourceMap

@@ -1,8 +1,12 @@
 package collection
 
 import (
+	"encoding/json"
 	"os"
 	"testing"
+	"time"
+
+	"github.com/polyse/database/pkg/filters"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/xujiajun/nutsdb"
@@ -13,37 +17,29 @@ var (
 	nutColl = "testCollection"
 )
 
-type testByte struct {
-	str string
-}
-
-func (tb *testByte) GetBytes() []byte {
-	return []byte(tb.str)
-}
-
-type repositoryTestSuite struct {
+type processorTestSuite struct {
 	suite.Suite
-	repo   Repository
+	proc   Processor
 	nutsDb *nutsdb.DB
 }
 
 func TestStartConnectionSuit(t *testing.T) {
-	suite.Run(t, new(repositoryTestSuite))
+	suite.Run(t, new(processorTestSuite))
 }
 
-func (cts *repositoryTestSuite) SetupTest() {
+func (cts *processorTestSuite) SetupTest() {
 	opt := nutsdb.DefaultOptions
 	opt.Dir = dbDir
 	nutsDb, err := nutsdb.Open(opt)
 	if err != nil {
 		panic(err)
 	}
-	repo := NewNutRepo(BucketName(nutColl), nutsDb)
-	cts.repo = repo
+	proc := NewSimpleProcessor(nutsDb, Name(nutColl), filters.FilterText)
+	cts.proc = proc
 	cts.nutsDb = nutsDb
 }
 
-func (cts *repositoryTestSuite) TearDownTest() {
+func (cts *processorTestSuite) TearDownTest() {
 	if err := cts.nutsDb.Close(); err != nil {
 		panic(err)
 	}
@@ -52,22 +48,17 @@ func (cts *repositoryTestSuite) TearDownTest() {
 	}
 }
 
-func (cts *repositoryTestSuite) TestConnection_NewConnection() {
+func (cts *processorTestSuite) TestConnection_NewConnection() {
 	cts.DirExists(dbDir)
 }
 
-func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
-	saveData := map[string][]ByteArr{
-		"test": {
-			&testByte{str: "data1"},
-			&testByte{str: "data2"},
-		},
-	}
-	cts.NoError(cts.repo.Save(saveData))
+func (cts *processorTestSuite) TestNutsRepository_Save1() {
+	saveData := []RawData{{Url: "test", Data: "data1 data2"}}
+	cts.NoError(cts.proc.ProcessAndInsertString(saveData))
 	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
-			key := []byte("test")
-			bucket := nutColl
+			key := []byte("data1")
+			bucket := dataPrefix + nutColl
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
@@ -75,7 +66,7 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
 				for i := range e {
 					data = append(data, string(e[i]))
 				}
-				cts.ElementsMatch([]string{"data1", "data2"}, data)
+				cts.ElementsMatch([]string{`{"Url":"test","Pos":[0]}`}, data)
 			}
 			return nil
 		}); err != nil {
@@ -83,21 +74,33 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save1() {
 	}
 }
 
-func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
-	saveData := map[string][]ByteArr{
-		"test0": {
-			&testByte{"data0-0"},
-			&testByte{"data0-1"},
+func (cts *processorTestSuite) TestNutsRepository_Save2() {
+
+	now := time.Now()
+
+	saveData := []RawData{
+		{
+			Url:  "source1",
+			Data: "data1 data2 data2",
+			Source: Source{
+				Date:  now,
+				Title: "Test Title",
+			},
 		},
-		"test1": {
-			&testByte{"data1-0"},
+		{
+			Url:  "source2",
+			Data: "data3 data2",
+			Source: Source{
+				Date:  now,
+				Title: "Test Second Title",
+			},
 		},
 	}
-	cts.NoError(cts.repo.Save(saveData))
+	cts.NoError(cts.proc.ProcessAndInsertString(saveData))
 	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
-			key := []byte("test1")
-			bucket := nutColl
+			key := []byte("data2")
+			bucket := dataPrefix + nutColl
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
@@ -105,31 +108,28 @@ func (cts *repositoryTestSuite) TestNutsRepository_Save2() {
 				for i := range e {
 					data = append(data, string(e[i]))
 				}
-				cts.ElementsMatch([]string{"data1-0"}, data)
+				cts.ElementsMatch([]string{`{"Url":"source1","Pos":[1,2]}`, `{"Url":"source2","Pos":[1]}`}, data)
 			}
 			return nil
 		}); err != nil {
 		panic(err)
 	}
 
-	cts.NoError(cts.repo.Save(map[string][]ByteArr{
-		"test1": {
-			&testByte{"data1-1"},
-		},
-	}))
-
 	if err := cts.nutsDb.View(
 		func(tx *nutsdb.Tx) error {
-			key := []byte("test1")
-			bucket := nutColl
-			if e, err := tx.SMembers(bucket, key); err != nil {
+			key := []byte("source1")
+			bucket := sourceBucket
+			if e, err := tx.Get(bucket, key); err != nil {
 				return err
 			} else {
-				data := make([]string, 0, len(e))
-				for i := range e {
-					data = append(data, string(e[i]))
+				data, err := json.Marshal(&Source{
+					Date:  now,
+					Title: "Test Title",
+				})
+				if err != nil {
+					return err
 				}
-				cts.ElementsMatch([]string{"data1-0", "data1-1"}, data)
+				cts.JSONEq(string(data), string(e.Value))
 			}
 			return nil
 		}); err != nil {
