@@ -4,6 +4,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -38,8 +39,9 @@ type RawData struct {
 	Data   string `json:"data" validate:"required"`
 }
 
+// Documents is type to Bind for get []RawData
 type Documents struct {
-	Documents []RawData `json:"documents" validate:"required"`
+	Documents []RawData `json:"documents" validate:"required,dive"`
 }
 
 // временно
@@ -135,10 +137,10 @@ func handleAddDocuments(c echo.Context) error {
 
 	var ds Documents
 	if err := c.Bind(&ds); err != nil {
+		fmt.Println("bind err")
 		return err
 	}
 	if err := c.Validate(ds); err != nil {
-		log.Error().Err(err).Msg("")
 		return err
 	}
 
