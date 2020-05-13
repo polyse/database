@@ -146,8 +146,14 @@ func handleSearch(c echo.Context) error {
 	var err error
 
 	request.Query = c.QueryParam("q")
-	request.Limit, _ = strconv.Atoi(c.QueryParam("limit"))
-	request.Offset, _ = strconv.Atoi(c.QueryParam("offset"))
+	request.Limit, err = strconv.Atoi(c.QueryParam("limit"))
+	if err != nil {
+		log.Debug().Err(err).Msg("can't convert limit to int")
+	}
+	request.Offset, err = strconv.Atoi(c.QueryParam("offset"))
+	if err != nil {
+		log.Debug().Err(err).Msg("can't convert offset to int")
+	}
 
 	collection := c.Param("collection")
 
