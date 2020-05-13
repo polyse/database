@@ -40,13 +40,13 @@ func (ac *AppConfig) checkConfig() {
 
 // Source structure for domain\article\site\source description
 type Source struct {
-	Date  time.Time `json:"date"`
-	Title string    `json:"title"`
+	Date  time.Time `json:"date" validate:"required"`
+	Title string    `json:"title" validate:"required"`
 }
 
 // RawData structure for json data description
 type RawData struct {
-	Source `json:"source" validate:"required"`
+	Source `json:"source" validate:"required,dive"`
 	Url    string `json:"url" validate:"required,url"`
 	Data   string `json:"data" validate:"required"`
 }
@@ -72,6 +72,7 @@ func (cv *Validator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
+// WebError - to add custom msg and code to err.
 type WebError struct {
 	err  error
 	code int
@@ -82,6 +83,7 @@ func (w WebError) Error() string {
 	return w.err.Error()
 }
 
+// WrapWebError is wrap code, message and err in WebError.
 func WrapWebError(code int, msg string, err error) WebError {
 	return WebError{code: code, err: err, msg: http.StatusText(code)}
 }
@@ -89,20 +91,20 @@ func WrapWebError(code int, msg string, err error) WebError {
 func httpErrorHandler(err error, c echo.Context) {
 	log.Err(err).Msg("web exception")
 
-	var errJson error
+	var errJSON error
 	if we, ok := err.(WebError); ok {
-		errJson = c.JSONBlob(we.code, []byte(we.msg))
+		errJSON = c.JSONBlob(we.code, []byte(we.msg))
 	} else {
-		errJson = c.JSONBlob(http.StatusInternalServerError, []byte(http.StatusText(http.StatusInternalServerError)))
+		errJSON = c.JSONBlob(http.StatusInternalServerError, []byte(http.StatusText(http.StatusInternalServerError)))
 	}
 
-	if errJson != nil {
-		log.Err(errJson).Msg("can not write error to response")
+	if errJSON != nil {
+		log.Err(errJSON).Msg("can not write error to response")
 	}
 }
 
 func ok(c echo.Context) error {
-	encodedJSON := []byte(`{"message": "200 OK"}`)
+	encodedJSON := []byte(`OK`)
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
@@ -173,6 +175,7 @@ func handleAddDocuments(c echo.Context) error {
 	if err := c.Bind(&docs); err != nil {
 		return WrapWebError(400, "Bad request.", err)
 	}
+	fmt.Println(docs)
 	if err := c.Validate(docs); err != nil {
 		return WrapWebError(400, "Bad request.", err)
 	}
