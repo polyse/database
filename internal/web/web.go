@@ -15,6 +15,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var (
+	simpleMessage = `{"message": "%d %s"}`
+)
+
 // App structure containing the necessary server settings and responsible for starting and stopping it.
 type App struct {
 	srv *http.Server
@@ -69,8 +73,8 @@ type Validator struct {
 }
 
 // Validate add go-playground/validator in echo.
-func (cv *Validator) Validate(i interface{}) error {
-	return cv.validator.Struct(i)
+func (v *Validator) Validate(i interface{}) error {
+	return v.validator.Struct(i)
 }
 
 // WebError - to add custom msg and code to err.
@@ -94,9 +98,9 @@ func httpErrorHandler(err error, c echo.Context) {
 
 	var errJSON error
 	if we, ok := err.(WebError); ok {
-		errJSON = c.JSONBlob(we.code, []byte(fmt.Sprintf(`{"message": "%d %s"}`, we.code, we.msg)))
+		errJSON = c.JSONBlob(we.code, []byte(fmt.Sprintf(simpleMessage, we.code, we.msg)))
 	} else {
-		errJSON = c.JSONBlob(http.StatusInternalServerError, []byte(fmt.Sprintf(`{"message": "%d %s"}`, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))))
+		errJSON = c.JSONBlob(http.StatusInternalServerError, []byte(fmt.Sprintf(simpleMessage, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))))
 	}
 
 	if errJSON != nil {
@@ -105,7 +109,7 @@ func httpErrorHandler(err error, c echo.Context) {
 }
 
 func ok(c echo.Context) error {
-	encodedJSON := []byte(fmt.Sprintf(`{"message": "%d %s"}`, http.StatusOK, http.StatusText(http.StatusOK)))
+	encodedJSON := []byte(fmt.Sprintf(simpleMessage, http.StatusOK, http.StatusText(http.StatusOK)))
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
