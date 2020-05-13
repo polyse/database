@@ -4,6 +4,7 @@ package web
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -84,7 +85,7 @@ func (w WebError) Error() string {
 }
 
 // WrapWebError is wrap code, message and err in WebError.
-func WrapWebError(code int, msg string, err error) WebError {
+func WrapWebError(code int, err error) WebError {
 	return WebError{code: code, err: err, msg: http.StatusText(code)}
 }
 
@@ -93,9 +94,9 @@ func httpErrorHandler(err error, c echo.Context) {
 
 	var errJSON error
 	if we, ok := err.(WebError); ok {
-		errJSON = c.JSONBlob(we.code, []byte(we.msg))
+		errJSON = c.JSONBlob(we.code, []byte(fmt.Sprintf(`{"message": "%d %s"}`, we.code, we.msg)))
 	} else {
-		errJSON = c.JSONBlob(http.StatusInternalServerError, []byte(http.StatusText(http.StatusInternalServerError)))
+		errJSON = c.JSONBlob(http.StatusInternalServerError, []byte(fmt.Sprintf(`{"message": "%d %s"}`, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))))
 	}
 
 	if errJSON != nil {
@@ -104,7 +105,7 @@ func httpErrorHandler(err error, c echo.Context) {
 }
 
 func ok(c echo.Context) error {
-	encodedJSON := []byte(`OK`)
+	encodedJSON := []byte(fmt.Sprintf(`{"message": "%d %s"}`, http.StatusOK, http.StatusText(http.StatusOK)))
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
@@ -157,7 +158,7 @@ func handleSearch(c echo.Context) error {
 		Msg("handleSearch run")
 
 	if err = c.Validate(request); err != nil {
-		return WrapWebError(400, "Bad request.", err)
+		return WrapWebError(http.StatusBadRequest, err)
 	}
 
 	// here will be searching
@@ -174,10 +175,10 @@ func handleAddDocuments(c echo.Context) error {
 
 	var docs Documents
 	if err := c.Bind(&docs); err != nil {
-		return WrapWebError(400, "Bad request.", err)
+		return WrapWebError(http.StatusBadRequest, err)
 	}
 	if err := c.Validate(docs); err != nil {
-		return WrapWebError(400, "Bad request.", err)
+		return WrapWebError(http.StatusBadRequest, err)
 	}
 
 	// here will be sending document to bd
