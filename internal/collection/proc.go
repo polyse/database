@@ -41,15 +41,15 @@ type Config struct {
 
 // Source structure for domain\article\site\source description
 type Source struct {
-	Date  time.Time `json:"date"`
-	Title string    `json:"title"`
+	Date  time.Time `json:"date" validate:"required"`
+	Title string    `json:"title" validate:"required"`
 }
 
 // RawData structure for json data description
 type RawData struct {
-	Source
-	Url  string `json:"url"`
-	Data string `json:"data"`
+	Source `json:"source" validate:"required,dive"`
+	Url    string `json:"url" validate:"required,url"`
+	Data   string `json:"data" validate:"required"`
 }
 
 // WordInfo structure for describing positions of tokens in the text at a given url
