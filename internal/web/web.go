@@ -56,10 +56,11 @@ type Documents struct {
 	Documents []RawData `json:"documents" validate:"required,dive"`
 }
 
-// временно
+// SearchRequest is strust for storage and validate query param
 type SearchRequest struct {
-	Query string `validate:"required"`
-	Limit int    `validate:"gte=0"`
+	Query  string `validate:"required"`
+	Limit  int    `validate:"gte=0"`
+	Offset int    `validate:"gte=0"`
 }
 
 // Validator - to add custom validator in echo.
@@ -146,6 +147,7 @@ func handleSearch(c echo.Context) error {
 
 	request.Query = c.QueryParam("q")
 	request.Limit, _ = strconv.Atoi(c.QueryParam("limit"))
+	request.Offset, _ = strconv.Atoi(c.QueryParam("offset"))
 
 	collection := c.Param("collection")
 
