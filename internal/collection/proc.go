@@ -2,6 +2,7 @@ package collection
 
 import (
 	"encoding/json"
+	"sort"
 	"sync"
 	"time"
 
@@ -21,6 +22,7 @@ var (
 // storing them in a given database collection.
 type Processor interface {
 	ProcessAndInsertString(data []RawData) error
+	ProcessAndGet(query string, limit, offset int) ([]ResponseData, error)
 	GetCollectionName() string
 }
 
@@ -45,6 +47,11 @@ type Source struct {
 	Title string    `json:"title" validate:"required"`
 }
 
+type ResponseData struct {
+	Source
+	Url string
+}
+
 // RawData structure for json data description
 type RawData struct {
 	Source `json:"source" validate:"required,dive"`
@@ -65,6 +72,11 @@ func (i *WordInfo) toJson() ([]byte, error) {
 		return nil, err
 	}
 	return b, err
+}
+
+func fromJson(data []byte) (w WordInfo, err error) {
+	err = json.Unmarshal(data, &w)
+	return w, err
 }
 
 // Name is type to describe collection name in database
@@ -170,6 +182,14 @@ func (p *SimpleProcessor) GetCollectionName() string {
 	return p.colName
 }
 
+// ProcessAndGet processes the incoming request, dividing it into tokens and filtering,
+// after which it finds documents in the specified collection with the maximum number of words from the search query.
+// Supports pagination.
+func (p *SimpleProcessor) ProcessAndGet(query string, limit, offset int) ([]ResponseData, error) {
+	clearText := p.tokenizer(query, p.filters...)
+	return p.findByWords(clearText, limit, offset)
+}
+
 func buildIndexForOneSource(src string, words []string) map[string]*WordInfo {
 	sourceMap := make(map[string]*WordInfo)
 	for i := range words {
@@ -190,6 +210,119 @@ func (p *SimpleProcessor) saveSource(key string, src Source) error {
 	return p.db.Update(func(tx *nutsdb.Tx) error {
 		return tx.Put(sourceBucket, []byte(key), d, 0)
 	})
+}
+
+func (p *SimpleProcessor) findByWords(keys []string, limit, offset int) (res []ResponseData, err error) {
+	log.Debug().
+		Strs("search words", keys).
+		Int("limit", limit).
+		Int("offset", offset).
+		Msg("start searching")
+	if err = p.db.View(func(tx *nutsdb.Tx) error {
+		src, err := findKeys(tx, p.bucketName, keys)
+		if err != nil {
+			return err
+		}
+		src = maxKeys(src)
+		log.Debug().
+			Strs("search words", keys).
+			Interface("sources", src).
+			Msg("start collect source information")
+		res, err = findSources(tx, src)
+		if err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	log.Debug().
+		Strs("search words", keys).
+		Int("raw length", len(res)).
+		Interface("result", res).
+		Msg("data found")
+
+	sort.Slice(res, func(i, j int) bool {
+		return res[i].Date.After(res[j].Date)
+	})
+	if offset >= len(res) {
+		offset = 0
+	}
+	if limit+offset > len(res) {
+		limit = len(res) - offset
+	}
+	res = res[offset : limit+offset]
+	log.Debug().
+		Strs("search words", keys).
+		Int("limit", limit).
+		Int("offset", offset).
+		Interface("pagination result", res).
+		Msg("data found")
+	return res, nil
+}
+
+func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]string, error) {
+	src := make(map[string][]string)
+	for i := range keys {
+		d, err := tx.SMembers(bucketName, []byte(keys[i]))
+		if err != nil {
+			return nil, err
+		}
+		if err = prepareSet(src, d, keys[i]); err != nil {
+			return nil, err
+		}
+	}
+	return src, nil
+}
+
+func prepareSet(src map[string][]string, data [][]byte, word string) error {
+	for j := range data {
+		s, err := fromJson(data[j])
+		if err != nil {
+			return err
+		}
+		if src[s.Url] == nil {
+			src[s.Url] = []string{word}
+		} else {
+			src[s.Url] = append(src[s.Url], word)
+		}
+	}
+	return nil
+}
+
+func maxKeys(input map[string][]string) map[string][]string {
+	output := make(map[string][]string)
+	max := 0
+	for k := range input {
+		if len(input[k]) == max {
+			output[k] = input[k]
+		}
+		if len(input[k]) > max {
+			max = len(input[k])
+			output = make(map[string][]string)
+			output[k] = input[k]
+		}
+	}
+	return output
+}
+
+func findSources(tx *nutsdb.Tx, src map[string][]string) (res []ResponseData, err error) {
+	for i := range src {
+		e, err := tx.Get(sourceBucket, []byte(i))
+		if err != nil {
+			return nil, err
+		}
+		var s Source
+		if err = json.Unmarshal(e.Value, &s); err != nil {
+			return nil, err
+		}
+		res = append(res, ResponseData{
+			Source: s,
+			Url:    i,
+		})
+	}
+	return res, nil
 }
 
 func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
