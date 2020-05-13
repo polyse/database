@@ -26,10 +26,22 @@ type AppConfig struct {
 	Timeout      time.Duration
 }
 
+func (ac *AppConfig) checkConfig() {
+
+	log.Debug().Msg("checking web application config")
+
+	if ac.NetInterface == "" {
+		ac.NetInterface = "localhost:9000"
+	}
+	if ac.Timeout <= 0 {
+		ac.Timeout = 10 * time.Millisecond
+	}
+}
+
 // Source structure for domain\article\site\source description
 type Source struct {
-	Date  time.Time `json:"date" validate:"required"`
-	Title string    `json:"title" validate:"required"`
+	Date  time.Time `json:"date"`
+	Title string    `json:"title"`
 }
 
 // RawData structure for json data description
@@ -60,16 +72,38 @@ func (cv *Validator) Validate(i interface{}) error {
 	return cv.validator.Struct(i)
 }
 
-func (ac *AppConfig) checkConfig() {
+type WebError struct {
+	err  error
+	code int
+	msg  string
+}
 
-	log.Debug().Msg("checking web application config")
+func (w WebError) Error() string {
+	return w.err.Error()
+}
 
-	if ac.NetInterface == "" {
-		ac.NetInterface = "localhost:9000"
+func WrapWebError(code int, msg string, err error) WebError {
+	return WebError{code: code, err: err, msg: http.StatusText(code)}
+}
+
+func httpErrorHandler(err error, c echo.Context) {
+	log.Err(err).Msg("web exception")
+
+	var errJson error
+	if we, ok := err.(WebError); ok {
+		errJson = c.JSONBlob(we.code, []byte(we.msg))
+	} else {
+		errJson = c.JSONBlob(http.StatusInternalServerError, []byte(http.StatusText(http.StatusInternalServerError)))
 	}
-	if ac.Timeout <= 0 {
-		ac.Timeout = 10 * time.Millisecond
+
+	if errJson != nil {
+		log.Err(errJson).Msg("can not write error to response")
 	}
+}
+
+func ok(c echo.Context) error {
+	encodedJSON := []byte(`{"message": "200 OK"}`)
+	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
 // NewApp returns a new ready-to-launch App object with adjusted settings.
@@ -120,7 +154,7 @@ func handleSearch(c echo.Context) error {
 		Msg("handleSearch run")
 
 	if err = c.Validate(request); err != nil {
-		return err
+		return WrapWebError(400, "Bad request.", err)
 	}
 
 	// here will be searching
@@ -135,37 +169,17 @@ func handleAddDocuments(c echo.Context) error {
 		Str("collection", collection).
 		Msg("handleSearch run")
 
-	var ds Documents
-	if err := c.Bind(&ds); err != nil {
-		fmt.Println("bind err")
-		return err
+	var docs Documents
+	if err := c.Bind(&docs); err != nil {
+		return WrapWebError(400, "Bad request.", err)
 	}
-	if err := c.Validate(ds); err != nil {
-		return err
+	if err := c.Validate(docs); err != nil {
+		return WrapWebError(400, "Bad request.", err)
 	}
 
 	// here will be sending document to bd
 
 	return ok(c)
-}
-
-func ok(c echo.Context) error {
-	encodedJSON := []byte(`{"message": "200 OK"}`)
-	return c.JSONBlob(http.StatusOK, encodedJSON)
-}
-
-func httpErrorHandler(err error, c echo.Context) {
-	log.Error().
-		Err(err).
-		Msg("")
-
-	encodedJSON := []byte(`{"message": "400 Bad request"}`)
-	err = c.JSONBlob(http.StatusOK, encodedJSON)
-	if err != nil {
-		log.Error().
-			Err(err).
-			Msg("")
-	}
 }
 
 // Run start the server.
