@@ -4,7 +4,6 @@ package web
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -40,7 +39,7 @@ func (ac *AppConfig) checkConfig() {
 
 // Source structure for domain\article\site\source description
 type Source struct {
-	Date  time.Time `json:"date" validate:"required"`
+	Date  time.Time `json:"date" validate:"required"` // format: 2006-01-02T15:04:05+07:00
 	Title string    `json:"title" validate:"required"`
 }
 
@@ -177,7 +176,6 @@ func handleAddDocuments(c echo.Context) error {
 	if err := c.Bind(&docs); err != nil {
 		return WrapWebError(400, "Bad request.", err)
 	}
-	fmt.Println(docs)
 	if err := c.Validate(docs); err != nil {
 		return WrapWebError(400, "Bad request.", err)
 	}
