@@ -2,6 +2,7 @@ package collection
 
 import (
 	"encoding/json"
+	"sync"
 	"time"
 
 	"github.com/pkg/errors"
@@ -114,21 +115,54 @@ func (p *SimpleProcessor) ProcessAndInsertString(data []RawData) error {
 		Str("collection in processor", p.GetCollectionName()).
 		Msg("processing data")
 	parsed := make(map[string][]*WordInfo)
+	dataCh := make(chan map[string]*WordInfo, len(data))
+	errCh := make(chan error, 1)
+	var wg sync.WaitGroup
+
 	for k := range data {
-		if err := p.saveSource(data[k].Url, Source{Date: data[k].Date, Title: data[k].Title}); err != nil {
-			return errors.Wrapf(err, "can not save source %s", data[k].Url)
-		}
-		clearText := p.tokenizer(data[k].Data, p.filters...)
-		sourceMap := buildIndexForOneSource(data[k].Url, clearText)
-		for i := range sourceMap {
-			if parsed[i] == nil {
-				parsed[i] = []*WordInfo{sourceMap[i]}
-			} else {
-				parsed[i] = append(parsed[i], sourceMap[i])
+		wg.Add(1)
+		go func(wr *sync.WaitGroup, data RawData, errChan chan<- error, dataChan chan<- map[string]*WordInfo) {
+			defer wg.Done()
+			p.asyncProcessData(data, errCh, dataCh)
+		}(&wg, data[k], errCh, dataCh)
+	}
+	go func(wg *sync.WaitGroup, dataChan chan map[string]*WordInfo, errChan chan error) {
+		wg.Wait()
+		close(errCh)
+		close(dataCh)
+	}(&wg, dataCh, errCh)
+ReadLoop:
+	for {
+		select {
+		case d, ok := <-dataCh:
+			if !ok {
+				break ReadLoop
+			}
+			for i := range d {
+				if parsed[i] == nil {
+					parsed[i] = []*WordInfo{d[i]}
+				} else {
+					parsed[i] = append(parsed[i], d[i])
+				}
+			}
+		case err, ok := <-errCh:
+			if ok {
+				return err
 			}
 		}
 	}
+
 	return p.saveData(parsed)
+}
+
+func (p *SimpleProcessor) asyncProcessData(data RawData, errChan chan<- error, dataChan chan<- map[string]*WordInfo) {
+	if err := p.saveSource(data.Url, Source{Date: data.Date, Title: data.Title}); err != nil {
+		errChan <- errors.Wrapf(err, "can not save source %s", data.Url)
+		return
+	}
+	clearText := p.tokenizer(data.Data, p.filters...)
+	sourceMap := buildIndexForOneSource(data.Url, clearText)
+	dataChan <- sourceMap
 }
 
 // GetCollectionName returns the name of the collection specified for this processor.
