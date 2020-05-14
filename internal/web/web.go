@@ -31,7 +31,6 @@ type AppConfig struct {
 }
 
 func (ac *AppConfig) checkConfig() {
-
 	log.Debug().Msg("checking web application config")
 
 	if ac.NetInterface == "" {
@@ -77,21 +76,15 @@ func (v *Validator) Validate(i interface{}) error {
 	return v.validator.Struct(i)
 }
 
-func ok(c echo.Context) error {
-	encodedJSON := []byte(fmt.Sprintf(simpleMessage, http.StatusOK, http.StatusText(http.StatusOK)))
-	return c.JSONBlob(http.StatusOK, encodedJSON)
-}
-
 // NewApp returns a new ready-to-launch API object with adjusted settings.
 func NewApp(appCfg AppConfig) (*API, error) {
-	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
-
 	appCfg.checkConfig()
+
+	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
 
 	e := echo.New()
 	e.Validator = &Validator{validator: validator.New()}
 	e.Use(logMiddleware())
-	// e.HTTPErrorHandler = httpErrorHandler
 
 	e.GET("/healthcheck", handleHealthcheck)
 
@@ -117,12 +110,10 @@ func handleSearch(c echo.Context) error {
 	var err error
 
 	request.Query = c.QueryParam("q")
-	request.Limit, err = strconv.Atoi(c.QueryParam("limit"))
-	if err != nil {
+	if request.Limit, err = strconv.Atoi(c.QueryParam("limit")); err != nil {
 		log.Debug().Err(err).Msg("can't convert limit to int")
 	}
-	request.Offset, err = strconv.Atoi(c.QueryParam("offset"))
-	if err != nil {
+	if request.Offset, err = strconv.Atoi(c.QueryParam("offset")); err != nil {
 		log.Debug().Err(err).Msg("can't convert offset to int")
 	}
 
@@ -135,6 +126,7 @@ func handleSearch(c echo.Context) error {
 		Msg("handleSearch run")
 
 	if err = c.Validate(request); err != nil {
+		log.Debug().Err(err).Msg("")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -150,11 +142,13 @@ func handleAddDocuments(c echo.Context) error {
 		Str("collection", collection).
 		Msg("handleSearch run")
 
-	var docs Documents
-	if err := c.Bind(&docs); err != nil {
+	docs := &Documents{}
+	if err := c.Bind(docs); err != nil {
+		log.Debug().Err(err).Msg("")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if err := c.Validate(docs); err != nil {
+		log.Debug().Err(err).Msg("")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -178,16 +172,19 @@ func (a *API) Close() error {
 	return a.e.Close()
 }
 
+func ok(c echo.Context) error {
+	encodedJSON := []byte(fmt.Sprintf(simpleMessage, http.StatusOK, http.StatusText(http.StatusOK)))
+	return c.JSONBlob(http.StatusOK, encodedJSON)
+}
+
 func logMiddleware() echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) (err error) {
-			start := time.Now()
 
 			log.Debug().
 				Str("method", c.Request().Method).
 				Str("remote", c.Request().RemoteAddr).
 				Str("path", c.Path()).
-				Int("duration", int(time.Since(start))).
 				Msgf("called url %s", c.Request().URL)
 
 			return next(c)
