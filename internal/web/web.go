@@ -3,13 +3,12 @@
 package web
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	// "github.com/polyse/databaseinternal/collection"
+	// "github.com/polyse/database/internal/collection"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/rs/zerolog/log"
@@ -21,7 +20,8 @@ var (
 
 // App structure containing the necessary server settings and responsible for starting and stopping it.
 type App struct {
-	srv *http.Server
+	e    *echo.Echo
+	addr string
 }
 
 // AppConfig structure containing the server settings necessary for its operation.
@@ -114,7 +114,7 @@ func ok(c echo.Context) error {
 }
 
 // NewApp returns a new ready-to-launch App object with adjusted settings.
-func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
+func NewApp(appCfg AppConfig) (*App, error) {
 	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
 
 	appCfg.checkConfig()
@@ -132,12 +132,11 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*App, func(), error) {
 
 	log.Debug().Msg("endpoints registered")
 
-	srv := &http.Server{
-		Addr:    appCfg.NetInterface,
-		Handler: e,
+	a := &App{
+		e:    e,
+		addr: appCfg.NetInterface,
 	}
-	a := &App{srv: srv}
-	return a, a.Close(ctx), nil
+	return a, nil
 }
 
 func handleHealthcheck(c echo.Context) error {
@@ -199,10 +198,16 @@ func handleAddDocuments(c echo.Context) error {
 // Run start the server.
 func (a *App) Run() error {
 	log.Info().Msg("database server started")
-	if err := a.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := a.e.Start(a.addr); err != nil && err != http.ErrServerClosed {
 		return err
 	}
 	return nil
+}
+
+// Close stop the server.
+func (a *App) Close() error {
+	log.Debug().Msg("shutting down server")
+	return a.e.Close()
 }
 
 func logMiddleware() echo.MiddlewareFunc {
@@ -219,19 +224,5 @@ func logMiddleware() echo.MiddlewareFunc {
 
 			return next(c)
 		}
-	}
-}
-
-// Close smoothly stops the server with the completion of all network connections with a specified timeout.
-func (a *App) Close(ctx context.Context) func() {
-	return func() {
-		log.Debug().Msg("start shutting down server")
-		tctx, cancel := context.WithTimeout(ctx, 10*time.Millisecond)
-		defer cancel()
-		if err := a.srv.Shutdown(tctx); err != nil {
-			log.Err(err).Msg("can not shutdown server correctly")
-			return
-		}
-		log.Info().Msg("server stopped correctly")
 	}
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -16,10 +15,6 @@ import (
 func main() {
 
 	defer closer.Close()
-
-	ctx, cancelCtx := context.WithCancel(context.Background())
-
-	closer.Bind(cancelCtx)
 
 	cfg, err := load()
 
@@ -42,7 +37,7 @@ func main() {
 	log.Debug().Msg("logger initialized")
 
 	log.Debug().Msg("starting di container")
-	a, cancel, err := initWebApp(ctx, cfg)
+	a, cancel, err := initWebApp(cfg)
 	if err != nil {
 		log.Err(err).Msg("error while init wire")
 		return
