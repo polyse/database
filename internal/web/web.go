@@ -82,29 +82,31 @@ func NewApp(appCfg AppConfig) (*API, error) {
 	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
 
 	e := echo.New()
-	e.Validator = &Validator{validator: validator.New()}
-	e.Use(logMiddleware())
-
-	e.GET("/healthcheck", handleHealthcheck)
-
-	g := e.Group("/api")
-	g.GET("/:collection/documents", handleSearch)
-	g.POST("/:collection/documents", handleAddDocuments)
-
-	log.Debug().Msg("endpoints registered")
 
 	a := &API{
 		e:    e,
 		addr: appCfg.NetInterface,
 	}
+
+	e.Validator = &Validator{validator: validator.New()}
+	e.Use(logMiddleware)
+
+	e.GET("/healthcheck", a.handleHealthcheck)
+
+	g := e.Group("/api")
+	g.GET("/:collection/documents", a.handleSearch)
+	g.POST("/:collection/documents", a.handleAddDocuments)
+
+	log.Debug().Msg("endpoints registered")
+
 	return a, nil
 }
 
-func handleHealthcheck(c echo.Context) error {
+func (api *API) handleHealthcheck(c echo.Context) error {
 	return ok(c)
 }
 
-func handleSearch(c echo.Context) error {
+func (api *API) handleSearch(c echo.Context) error {
 	var err error
 
 	request := &SearchRequest{}
@@ -131,7 +133,7 @@ func handleSearch(c echo.Context) error {
 	return ok(c)
 }
 
-func handleAddDocuments(c echo.Context) error {
+func (api *API) handleAddDocuments(c echo.Context) error {
 	collection := c.Param("collection")
 
 	log.Debug().
@@ -173,17 +175,18 @@ func ok(c echo.Context) error {
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
-func logMiddleware() echo.MiddlewareFunc {
-	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c echo.Context) (err error) {
+func logMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) (err error) {
 
-			log.Debug().
-				Str("method", c.Request().Method).
-				Str("remote", c.Request().RemoteAddr).
-				Str("path", c.Path()).
-				Msgf("called url %s", c.Request().URL)
+		log.Debug().
+			// Int("status", c.Response().Status).
+			Str("method", c.Request().Method).
+			Str("remote", c.Request().RemoteAddr).
+			Str("path", c.Path()).
+			Msgf("called url %s", c.Request().URL)
 
-			return next(c)
-		}
+		// middleware.Logger()(next)
+
+		return next(c)
 	}
 }

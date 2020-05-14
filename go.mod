@@ -13,6 +13,7 @@ require (
 	github.com/google/wire v0.4.0
 	github.com/kljensen/snowball v0.6.0
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.16
 	github.com/leodido/go-urn v1.2.0 // indirect
 	github.com/rs/zerolog v1.18.0
