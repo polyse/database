@@ -18,8 +18,8 @@ var (
 	simpleMessage = `{"message": "%d %s"}`
 )
 
-// App structure containing the necessary server settings and responsible for starting and stopping it.
-type App struct {
+// API structure containing the necessary server settings and responsible for starting and stopping it.
+type API struct {
 	e    *echo.Echo
 	addr string
 }
@@ -113,8 +113,8 @@ func ok(c echo.Context) error {
 	return c.JSONBlob(http.StatusOK, encodedJSON)
 }
 
-// NewApp returns a new ready-to-launch App object with adjusted settings.
-func NewApp(appCfg AppConfig) (*App, error) {
+// NewApp returns a new ready-to-launch API object with adjusted settings.
+func NewApp(appCfg AppConfig) (*API, error) {
 	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
 
 	appCfg.checkConfig()
@@ -132,7 +132,7 @@ func NewApp(appCfg AppConfig) (*App, error) {
 
 	log.Debug().Msg("endpoints registered")
 
-	a := &App{
+	a := &API{
 		e:    e,
 		addr: appCfg.NetInterface,
 	}
@@ -195,7 +195,7 @@ func handleAddDocuments(c echo.Context) error {
 }
 
 // Run start the server.
-func (a *App) Run() error {
+func (a *API) Run() error {
 	log.Info().Msg("database server started")
 	if err := a.e.Start(a.addr); err != nil && err != http.ErrServerClosed {
 		return err
@@ -204,7 +204,7 @@ func (a *App) Run() error {
 }
 
 // Close stop the server.
-func (a *App) Close() error {
+func (a *API) Close() error {
 	log.Debug().Msg("shutting down server")
 	return a.e.Close()
 }

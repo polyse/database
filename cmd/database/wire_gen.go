@@ -11,7 +11,7 @@ import (
 
 // Injectors from wire.go:
 
-func initWebApp(c *config) (*web.App, func(), error) {
+func initWebApp(c *config) (*web.API, func(), error) {
 	appConfig, err := initWebAppCfg(c)
 	if err != nil {
 		return nil, nil, err

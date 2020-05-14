@@ -8,7 +8,7 @@ import (
 	"github.com/polyse/database/internal/web"
 )
 
-func initWebApp(c *config) (*web.App, func(), error) {
+func initWebApp(c *config) (*web.API, func(), error) {
 	wire.Build(web.NewApp, initWebAppCfg)
 	return nil, nil, nil
 }
