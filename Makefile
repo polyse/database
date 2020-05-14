@@ -2,7 +2,7 @@ GOCMD=go
 GOBUILD=$(GOCMD) build
 BINARY_NAME=bin/database
 
-all: wire_build build run_server
+all: wire_build test build run_server
 
 wire_build:
 	cd cmd/database && wire
@@ -15,4 +15,5 @@ build:
 run_server:
 	$(BINARY_NAME)
 
-
+test:
+	$(GOCMD) test -v ./...
