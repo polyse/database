@@ -5,7 +5,6 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	// "github.com/polyse/database/internal/collection"
@@ -61,9 +60,9 @@ type Documents struct {
 
 // SearchRequest is strust for storage and validate query param
 type SearchRequest struct {
-	Query  string `validate:"required"`
-	Limit  int    `validate:"gte=0"`
-	Offset int    `validate:"gte=0"`
+	Query  string `validate:"required" query:"q"`
+	Limit  int    `validate:"gte=0" query:"limit"`
+	Offset int    `validate:"gte=0" query:"offset"`
 }
 
 // Validator - to add custom validator in echo.
@@ -106,15 +105,12 @@ func handleHealthcheck(c echo.Context) error {
 }
 
 func handleSearch(c echo.Context) error {
-	var request SearchRequest
 	var err error
 
-	request.Query = c.QueryParam("q")
-	if request.Limit, err = strconv.Atoi(c.QueryParam("limit")); err != nil {
-		log.Debug().Err(err).Msg("can't convert limit to int")
-	}
-	if request.Offset, err = strconv.Atoi(c.QueryParam("offset")); err != nil {
-		log.Debug().Err(err).Msg("can't convert offset to int")
+	request := &SearchRequest{}
+	if err := c.Bind(request); err != nil {
+		log.Debug().Err(err).Msg("")
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	collection := c.Param("collection")
