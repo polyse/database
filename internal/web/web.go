@@ -140,7 +140,6 @@ func NewApp(appCfg AppConfig) (*App, error) {
 }
 
 func handleHealthcheck(c echo.Context) error {
-	log.Debug().Msg("handleHealthcheck run")
 	return ok(c)
 }
 
