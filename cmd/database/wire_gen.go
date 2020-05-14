@@ -7,7 +7,6 @@ package main
 
 import (
 	"context"
-
 	"github.com/polyse/database/internal/collection"
 	"github.com/polyse/database/internal/web"
 )
@@ -28,7 +27,7 @@ func initWebApp(ctx context.Context, c *config) (*web.App, func(), error) {
 	}, nil
 }
 
-func initProcessorManager(c *config, collName collection.Name) (*collection.SimpleProcessorManager, func(), error) {
+func initProcessorManager(c *config, collName collection.Name) (*collection.Manager, func(), error) {
 	collectionConfig := initDbConfig(c)
 	db, cleanup, err := initConnection(collectionConfig)
 	if err != nil {
@@ -37,8 +36,8 @@ func initProcessorManager(c *config, collName collection.Name) (*collection.Simp
 	tokenizer := initTokenizer()
 	v := initFilters()
 	simpleProcessor := collection.NewSimpleProcessor(db, collName, tokenizer, v...)
-	simpleProcessorManager := collection.NewSimpleProcessorManagerWithProc(simpleProcessor)
-	return simpleProcessorManager, func() {
+	manager := collection.NewManagerWithProc(simpleProcessor)
+	return manager, func() {
 		cleanup()
 	}, nil
 }
