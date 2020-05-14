@@ -3,6 +3,7 @@ package collection
 import (
 	"encoding/json"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -267,6 +268,11 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 	for i := range keys {
 		d, err := tx.SMembers(bucketName, []byte(keys[i]))
 		if err != nil {
+			if err.Error() == "set not exists" ||
+				strings.HasPrefix(err.Error(), "not found bucket:"+bucketName+",key:") {
+				log.Warn().Err(err).Str("bucket", bucketName).Str("key", keys[i]).Msg("key not found")
+				err = nutsdb.ErrNotFoundKey
+			}
 			return nil, err
 		}
 		if err = prepareSet(src, d, keys[i]); err != nil {

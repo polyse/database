@@ -56,14 +56,3 @@ func (spm *Manager) GetProcessor(colName string) (Processor, error) {
 	}
 	return nil, ErrCollectionNotExist
 }
-
-func (spm *SimpleProcessorManager) ProcessAndGetData(colName, query string, limit, offset int) ([]ResponseData, error) {
-	log.Debug().Str("collection name", colName).Msg("manager, start finding data")
-	spm.RLock()
-	val, ok := spm.processors[colName]
-	spm.RUnlock()
-	if ok {
-		return val.ProcessAndGet(query, limit, offset)
-	}
-	return nil, fmt.Errorf("collection named %s does not exist", colName)
-}
