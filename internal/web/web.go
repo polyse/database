@@ -77,37 +77,6 @@ func (v *Validator) Validate(i interface{}) error {
 	return v.validator.Struct(i)
 }
 
-// WebError - to add custom msg and code to err.
-type WebError struct {
-	err  error
-	code int
-	msg  string
-}
-
-func (w WebError) Error() string {
-	return w.err.Error()
-}
-
-// WrapWebError is wrap code, message and err in WebError.
-func WrapWebError(code int, err error) WebError {
-	return WebError{code: code, err: err, msg: http.StatusText(code)}
-}
-
-func httpErrorHandler(err error, c echo.Context) {
-	log.Err(err).Msg("web exception")
-
-	var errJSON error
-	if we, ok := err.(WebError); ok {
-		errJSON = c.JSONBlob(we.code, []byte(fmt.Sprintf(simpleMessage, we.code, we.msg)))
-	} else {
-		errJSON = c.JSONBlob(http.StatusInternalServerError, []byte(fmt.Sprintf(simpleMessage, http.StatusInternalServerError, http.StatusText(http.StatusInternalServerError))))
-	}
-
-	if errJSON != nil {
-		log.Err(errJSON).Msg("can not write error to response")
-	}
-}
-
 func ok(c echo.Context) error {
 	encodedJSON := []byte(fmt.Sprintf(simpleMessage, http.StatusOK, http.StatusText(http.StatusOK)))
 	return c.JSONBlob(http.StatusOK, encodedJSON)
@@ -122,7 +91,7 @@ func NewApp(appCfg AppConfig) (*API, error) {
 	e := echo.New()
 	e.Validator = &Validator{validator: validator.New()}
 	e.Use(logMiddleware())
-	e.HTTPErrorHandler = httpErrorHandler
+	// e.HTTPErrorHandler = httpErrorHandler
 
 	e.GET("/healthcheck", handleHealthcheck)
 
@@ -166,7 +135,7 @@ func handleSearch(c echo.Context) error {
 		Msg("handleSearch run")
 
 	if err = c.Validate(request); err != nil {
-		return WrapWebError(http.StatusBadRequest, err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	// here will be searching
@@ -183,10 +152,10 @@ func handleAddDocuments(c echo.Context) error {
 
 	var docs Documents
 	if err := c.Bind(&docs); err != nil {
-		return WrapWebError(http.StatusBadRequest, err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if err := c.Validate(docs); err != nil {
-		return WrapWebError(http.StatusBadRequest, err)
+		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
 	// here will be sending document to bd
