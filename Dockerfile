@@ -12,7 +12,7 @@ FROM alpine:latest
 RUN apk --no-cache add ca-certificates
 WORKDIR /app
 COPY --from=0 /go/src/github.com/polyse/database .
-CMD mkdir /vara/data
+CMD mkdir /var/data
 ENV DB_FILE /var/data
 ENV LOG_FMT json
 ENTRYPOINT ["/app/app"]
