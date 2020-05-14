@@ -5,7 +5,7 @@ BINARY_NAME=bin/database
 all: wire_build build run_server
 
 wire_build:
-	cd cmd/database && wire
+	wire gen ./cmd/database
 	echo "wire build"
 
 build:
@@ -14,5 +14,8 @@ build:
 
 run_server:
 	$(BINARY_NAME)
+
+test:
+	go test -v ./...
 
 
