@@ -5,7 +5,6 @@ import (
 
 	"github.com/polyse/database/pkg/filters"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )
@@ -45,7 +44,7 @@ func TestSimpleProcessor_GetCollectionName(t *testing.T) {
 
 type processorManagerTestSuite struct {
 	suite.Suite
-	prm *SimpleProcessorManager
+	prm *Manager
 	tr  *MockProcessor
 	tr2 *MockProcessor
 }
@@ -70,7 +69,7 @@ func (pts *processorManagerTestSuite) SetupTest() {
 		On("GetCollectionName").
 		Return("secondTestCollection")
 
-	pts.prm = NewSimpleProcessorManagerWithProc(testProc)
+	pts.prm = NewManagerWithProc(testProc)
 
 	pts.prm.AddProcessor(testProc2)
 	pts.tr = testProc
@@ -92,13 +91,11 @@ func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors()
 }
 
 func (pts *processorManagerTestSuite) TestSimpleProcessorManager_ProcessAndInsertString() {
-	assert.NoError(
-		pts.T(),
-		pts.prm.ProcessAndInsertString(
-			"testCollection",
-			[]RawData{{Url: "test", Data: "data"}}...,
-		),
+	p, err := pts.prm.GetProcessor(
+		"testCollection",
 	)
+	pts.NoError(err)
+	pts.NoError(p.ProcessAndInsertString([]RawData{{Url: "test", Data: "data"}}))
 	pts.tr.AssertCalled(pts.T(), "ProcessAndInsertString", []RawData{{Url: "test", Data: "data"}})
 	pts.tr2.AssertNotCalled(pts.T(), "ProcessAndInsertString", mock.Anything, mock.Anything)
 }
