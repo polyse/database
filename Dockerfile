@@ -15,4 +15,5 @@ COPY --from=0 /go/src/github.com/polyse/database .
 CMD mkdir /var/data
 ENV DB_FILE /var/data
 ENV LOG_FMT json
+ENV LISTEN 0.0.0.0:9000
 ENTRYPOINT ["/app/app"]
