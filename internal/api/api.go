@@ -127,7 +127,7 @@ func (api *API) handleSearch(c echo.Context) error {
 
 	request := &SearchRequest{}
 	if err := c.Bind(request); err != nil {
-		log.Debug().Err(err).Msg("")
+		log.Debug().Err(err).Msg("handleSearch Bind err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -140,7 +140,7 @@ func (api *API) handleSearch(c echo.Context) error {
 		Msg("handleSearch run")
 
 	if err = c.Validate(request); err != nil {
-		log.Debug().Err(err).Msg("")
+		log.Debug().Err(err).Msg("handleSearch Validate err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
@@ -158,11 +158,11 @@ func (api *API) handleAddDocuments(c echo.Context) error {
 
 	docs := &Documents{}
 	if err := c.Bind(docs); err != nil {
-		log.Debug().Err(err).Msg("")
+		log.Debug().Err(err).Msg("handleAddDocuments Bind err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 	if err := c.Validate(docs); err != nil {
-		log.Debug().Err(err).Msg("")
+		log.Debug().Err(err).Msg("handleAddDocuments Validate err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
