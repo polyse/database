@@ -18,6 +18,7 @@ var (
 	simpleMessage = `{"message": "%d %s"}`
 )
 
+// Context structure for handle context from main
 type Context struct {
 	echo.Context
 	Ctx context.Context
@@ -172,11 +173,7 @@ func (api *API) handleAddDocuments(c echo.Context) error {
 
 // Run start the server.
 func (a *API) Run() error {
-	log.Info().Msg("database server started")
-	if err := a.e.Start(a.addr); err != nil && err != http.ErrServerClosed {
-		return err
-	}
-	return nil
+	return a.e.Start(a.addr)
 }
 
 // Close stop the server.
@@ -197,7 +194,7 @@ func logMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		start := time.Now()
 
 		err := next(c)
-		
+
 		stop := time.Now()
 
 		log.Debug().
