@@ -1,13 +1,14 @@
 package collection
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
+	"fmt"
 	"sort"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -64,20 +65,6 @@ type RawData struct {
 type WordInfo struct {
 	Url string
 	Pos []int
-}
-
-func (i *WordInfo) toJson() ([]byte, error) {
-	b, err := json.Marshal(i)
-	if err != nil {
-		log.Err(err).Interface("index", i).Msg("can not marshall data")
-		return nil, err
-	}
-	return b, err
-}
-
-func fromJson(data []byte) (w WordInfo, err error) {
-	err = json.Unmarshal(data, &w)
-	return w, err
 }
 
 // Name is type to describe collection name in database
@@ -170,7 +157,7 @@ ReadLoop:
 
 func (p *SimpleProcessor) asyncProcessData(data RawData, errChan chan<- error, dataChan chan<- map[string]*WordInfo) {
 	if err := p.saveSource(data.Url, Source{Date: data.Date, Title: data.Title}); err != nil {
-		errChan <- errors.Wrapf(err, "can not save source %s", data.Url)
+		errChan <- fmt.Errorf("can not save source %s, error %s", data.Url, err)
 		return
 	}
 	clearText := p.tokenizer(data.Data, p.filters...)
@@ -204,12 +191,15 @@ func buildIndexForOneSource(src string, words []string) map[string]*WordInfo {
 }
 
 func (p *SimpleProcessor) saveSource(key string, src Source) error {
-	d, err := json.Marshal(src)
+	var b bytes.Buffer
+	enc := gob.NewEncoder(&b)
+
+	err := enc.Encode(src)
 	if err != nil {
 		return err
 	}
 	return p.db.Update(func(tx *nutsdb.Tx) error {
-		return tx.Put(sourceBucket, []byte(key), d, 0)
+		return tx.Put(sourceBucket, []byte(key), b.Bytes(), 0)
 	})
 }
 
@@ -284,8 +274,10 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 
 func prepareSet(src map[string][]string, data [][]byte, word string) error {
 	for j := range data {
-		s, err := fromJson(data[j])
-		if err != nil {
+		var s WordInfo
+		r := bytes.NewReader(data[j])
+		dec := gob.NewDecoder(r)
+		if err := dec.Decode(&s); err != nil {
 			return err
 		}
 		if src[s.Url] == nil {
@@ -320,7 +312,9 @@ func findSources(tx *nutsdb.Tx, src map[string][]string) (res []ResponseData, er
 			return nil, err
 		}
 		var s Source
-		if err = json.Unmarshal(e.Value, &s); err != nil {
+		r := bytes.NewReader(e.Value)
+		dec := gob.NewDecoder(r)
+		if err = dec.Decode(&s); err != nil {
 			return nil, err
 		}
 		res = append(res, ResponseData{
@@ -340,10 +334,12 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 			vals := ent[i]
 			data := make([][]byte, 0, len(vals))
 			for j := range vals {
-				if b, err := vals[j].toJson(); err != nil {
+				var b bytes.Buffer
+				enc := gob.NewEncoder(&b)
+				if err := enc.Encode(vals[j]); err != nil {
 					return p.rollbackTransaction(tx, err)
 				} else {
-					data = append(data, b)
+					data = append(data, b.Bytes())
 				}
 			}
 			if err := tx.SAdd(p.bucketName, []byte(i), data...); err != nil {

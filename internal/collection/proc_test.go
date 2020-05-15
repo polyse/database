@@ -1,7 +1,8 @@
 package collection
 
 import (
-	"encoding/json"
+	"bytes"
+	"encoding/gob"
 	"os"
 	"testing"
 	"time"
@@ -68,11 +69,18 @@ func (cts *processorTestSuite) TestNutsRepository_Save1() {
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
-				data := make([]string, 0, len(e))
+				data := make([]WordInfo, 0, len(e))
 				for i := range e {
-					data = append(data, string(e[i]))
+					var s WordInfo
+					r := bytes.NewReader(e[i])
+					dec := gob.NewDecoder(r)
+					if err := dec.Decode(&s); err != nil {
+						return err
+					} else {
+						data = append(data, s)
+					}
 				}
-				cts.ElementsMatch([]string{`{"Url":"test","Pos":[0]}`}, data)
+				cts.ElementsMatch([]WordInfo{{Url: "test", Pos: []int{0}}}, data)
 			}
 			return nil
 		}); err != nil {
@@ -110,11 +118,18 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
-				data := make([]string, 0, len(e))
+				data := make([]WordInfo, 0, len(e))
 				for i := range e {
-					data = append(data, string(e[i]))
+					var s WordInfo
+					r := bytes.NewReader(e[i])
+					dec := gob.NewDecoder(r)
+					if err := dec.Decode(&s); err != nil {
+						return err
+					} else {
+						data = append(data, s)
+					}
 				}
-				cts.ElementsMatch([]string{`{"Url":"source1","Pos":[1,2]}`, `{"Url":"source2","Pos":[1]}`}, data)
+				cts.ElementsMatch([]WordInfo{{Url: "source1", Pos: []int{1, 2}}, {Url: "source2", Pos: []int{1}}}, data)
 			}
 			return nil
 		}); err != nil {
@@ -128,14 +143,16 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 			if e, err := tx.Get(bucket, key); err != nil {
 				return err
 			} else {
-				data, err := json.Marshal(&Source{
-					Date:  now,
-					Title: "Test Title",
-				})
-				if err != nil {
+				var s Source
+				r := bytes.NewReader(e.Value)
+				dec := gob.NewDecoder(r)
+				if err := dec.Decode(&s); err != nil {
 					return err
 				}
-				cts.JSONEq(string(data), string(e.Value))
+				cts.Equal(Source{
+					Date:  now.Round(1 * time.Nanosecond),
+					Title: "Test Title",
+				}, s)
 			}
 			return nil
 		}); err != nil {
@@ -160,11 +177,18 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 			if e, err := tx.SMembers(bucket, key); err != nil {
 				return err
 			} else {
-				data := make([]string, 0, len(e))
+				data := make([]WordInfo, 0, len(e))
 				for i := range e {
-					data = append(data, string(e[i]))
+					var s WordInfo
+					r := bytes.NewReader(e[i])
+					dec := gob.NewDecoder(r)
+					if err := dec.Decode(&s); err != nil {
+						return err
+					} else {
+						data = append(data, s)
+					}
 				}
-				cts.ElementsMatch([]string{`{"Url":"source1","Pos":[0]}`}, data)
+				cts.ElementsMatch([]WordInfo{{Url: "source1", Pos: []int{0}}}, data)
 			}
 			return nil
 		}); err != nil {
@@ -178,14 +202,16 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 			if e, err := tx.Get(bucket, key); err != nil {
 				return err
 			} else {
-				data, err := json.Marshal(&Source{
-					Date:  now,
-					Title: "Test Title New",
-				})
-				if err != nil {
+				var s Source
+				r := bytes.NewReader(e.Value)
+				dec := gob.NewDecoder(r)
+				if err := dec.Decode(&s); err != nil {
 					return err
 				}
-				cts.JSONEq(string(data), string(e.Value))
+				cts.Equal(Source{
+					Date:  now.Round(1 * time.Nanosecond),
+					Title: "Test Title New",
+				}, s)
 			}
 			return nil
 		}); err != nil {
