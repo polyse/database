@@ -274,17 +274,13 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 }
 
 func clearDoubleKeys(keys []string) []string {
-	clearMap := make(map[string]int)
-	index := 0
+	clearMap := make(map[string]bool)
+	var result []string
 	for i := range keys {
 		if _, ok := clearMap[keys[i]]; !ok {
-			clearMap[keys[i]] = index
-			index++
+			clearMap[keys[i]] = true
+			result = append(result, keys[i])
 		}
-	}
-	result := make([]string, 0, len(clearMap))
-	for w := range clearMap {
-		result[clearMap[w]] = w
 	}
 	return result
 }
@@ -355,7 +351,7 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 				var b bytes.Buffer
 				enc := gob.NewEncoder(&b)
 				if err := enc.Encode(vals[j]); err != nil {
-					return p.rollbackTransaction(tx, err)
+					return err
 				} else {
 					data = append(data, b.Bytes())
 				}
@@ -364,16 +360,9 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 				p.l.Err(err).
 					Str("key", i).
 					Msg("can not SADD to database")
-				return p.rollbackTransaction(tx, err)
+				return err
 			}
 		}
 		return nil
 	})
-}
-
-func (p *SimpleProcessor) rollbackTransaction(tx *nutsdb.Tx, err error) error {
-	if errC := tx.Rollback(); errC != nil {
-		p.l.Err(err).Msg("can not rollback transaction")
-	}
-	return err
 }
