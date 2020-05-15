@@ -191,17 +191,25 @@ func ok(c echo.Context) error {
 }
 
 func logMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) (err error) {
+	return func(c echo.Context) error {
+		req := c.Request()
+		res := c.Response()
+		start := time.Now()
+
+		err := next(c)
+		
+		stop := time.Now()
 
 		log.Debug().
-			// Int("status", c.Response().Status).
-			Str("method", c.Request().Method).
-			Str("remote", c.Request().RemoteAddr).
+			Str("remote", req.RemoteAddr).
+			Str("user_agent", req.UserAgent()).
+			Str("method", req.Method).
 			Str("path", c.Path()).
-			Msgf("called url %s", c.Request().URL)
+			Int("status", res.Status).
+			Dur("duration", stop.Sub(start)).
+			Str("duration_human", stop.Sub(start).String()).
+			Msgf("called url %s", req.URL)
 
-		//middleware.Logger()(next)
-
-		return next(c)
+		return err
 	}
 }
