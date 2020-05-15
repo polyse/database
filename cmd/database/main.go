@@ -25,7 +25,7 @@ var (
 			new(collection.Processor),
 			new(*collection.SimpleProcessor),
 		),
-		collection.NewSimpleProcessorManagerWithProc,
+		collection.NewManagerWithProc,
 	)
 )
 
