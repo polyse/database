@@ -90,7 +90,7 @@ func (pts *processorManagerTestSuite) TestSimpleProcessorManager_AddProcessors()
 	pts.Len(pts.prm.processors, 3)
 }
 
-func (pts *processorManagerTestSuite) TestSimpleProcessorManager_ProcessAndInsertString() {
+func (pts *processorManagerTestSuite) TestSimpleProcessorManager_GetProcessor() {
 	p, err := pts.prm.GetProcessor(
 		"testCollection",
 	)
