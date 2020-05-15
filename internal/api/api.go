@@ -3,6 +3,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -16,6 +17,11 @@ import (
 var (
 	simpleMessage = `{"message": "%d %s"}`
 )
+
+type Context struct {
+	echo.Context
+	Ctx context.Context
+}
 
 // API structure containing the necessary server settings and responsible for starting and stopping it.
 type API struct {
@@ -76,7 +82,7 @@ func (v *Validator) Validate(i interface{}) error {
 }
 
 // NewApp returns a new ready-to-launch API object with adjusted settings.
-func NewApp(appCfg AppConfig) (*API, error) {
+func NewApp(ctx context.Context, appCfg AppConfig) (*API, error) {
 	appCfg.checkConfig()
 
 	log.Debug().Interface("api app config", appCfg).Msg("starting initialize api application")
@@ -88,6 +94,15 @@ func NewApp(appCfg AppConfig) (*API, error) {
 		addr: appCfg.NetInterface,
 	}
 
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			cc := &Context{
+				Context: c,
+				Ctx:     ctx,
+			}
+			return next(cc)
+		}
+	})
 	e.Validator = &Validator{validator: validator.New()}
 	e.Use(logMiddleware)
 

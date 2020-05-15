@@ -6,17 +6,19 @@
 package main
 
 import (
+	"context"
+
 	"github.com/polyse/database/internal/api"
 )
 
 // Injectors from wire.go:
 
-func initWebApp(c *config) (*api.API, func(), error) {
+func initWebApp(ctx context.Context, c *config) (*api.API, func(), error) {
 	appConfig, err := initWebAppCfg(c)
 	if err != nil {
 		return nil, nil, err
 	}
-	app, err := api.NewApp(appConfig)
+	app, err := api.NewApp(ctx, appConfig)
 	if err != nil {
 		return nil, nil, err
 	}
