@@ -202,7 +202,7 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 			data := make([][]byte, 0, len(vals))
 			for j := range vals {
 				if b, err := vals[j].toJson(); err != nil {
-					return p.rollbackTransaction(tx, err)
+					return err
 				} else {
 					data = append(data, b)
 				}
@@ -211,16 +211,9 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 				p.l.Err(err).
 					Str("key", i).
 					Msg("can not SADD to database")
-				return p.rollbackTransaction(tx, err)
+				return err
 			}
 		}
 		return nil
 	})
-}
-
-func (p *SimpleProcessor) rollbackTransaction(tx *nutsdb.Tx, err error) error {
-	if errC := tx.Rollback(); errC != nil {
-		p.l.Err(err).Msg("can not rollback transaction")
-	}
-	return err
 }
