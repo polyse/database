@@ -254,6 +254,7 @@ func (p *SimpleProcessor) findByWords(keys []string, limit, offset int) (res []R
 }
 
 func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]string, error) {
+	keys = clearDoubleKeys(keys)
 	src := make(map[string][]string)
 	for i := range keys {
 		d, err := tx.SMembers(bucketName, []byte(keys[i]))
@@ -270,6 +271,22 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 		}
 	}
 	return src, nil
+}
+
+func clearDoubleKeys(keys []string) []string {
+	clearMap := make(map[string]int)
+	index := 0
+	for i := range keys {
+		if _, ok := clearMap[keys[i]]; !ok {
+			clearMap[keys[i]] = index
+			index++
+		}
+	}
+	result := make([]string, 0, len(clearMap))
+	for w := range clearMap {
+		result[clearMap[w]] = w
+	}
+	return result
 }
 
 func prepareSet(src map[string][]string, data [][]byte, word string) error {
