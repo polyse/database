@@ -18,7 +18,7 @@ var (
 	simpleMessage = `{"message": "%d %s"}`
 )
 
-// Context structure for handle context from main
+// Context structure for handle context from main.
 type Context struct {
 	echo.Context
 	Ctx context.Context
@@ -47,13 +47,13 @@ func (ac *AppConfig) checkConfig() {
 	}
 }
 
-// Source structure for domain\article\site\source description
+// Source structure for domain\article\site\source description.
 type Source struct {
 	Date  time.Time `json:"date" validate:"required"` // format: 2006-01-02T15:04:05+07:00
 	Title string    `json:"title" validate:"required"`
 }
 
-// RawData structure for json data description
+// RawData structure for json data description.
 type RawData struct {
 	Source `json:"source" validate:"required,dive"`
 	Url    string `json:"url" validate:"required,url"`
@@ -65,7 +65,7 @@ type Documents struct {
 	Documents []RawData `json:"documents" validate:"required,dive"`
 }
 
-// SearchRequest is strust for storage and validate query param
+// SearchRequest is strust for storage and validate query param.
 type SearchRequest struct {
 	Query  string `validate:"required" query:"q"`
 	Limit  int    `validate:"gte=0" query:"limit"`
