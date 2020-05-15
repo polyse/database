@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/polyse/database/internal/web"
+	"github.com/polyse/database/internal/api"
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -43,18 +43,18 @@ func main() {
 		return
 	}
 
-	log.Debug().Msg("starting web application")
+	log.Debug().Msg("starting api application")
 
 	// Bind closer func to smoothly close connection.
 	closer.Bind(cancel)
 
 	if err = a.Run(); err != nil {
-		log.Err(err).Msg("error while starting web app")
+		log.Err(err).Msg("error while starting api app")
 	}
 }
 
-func initWebAppCfg(c *config) (web.AppConfig, error) {
-	return web.AppConfig{Timeout: c.Timeout, NetInterface: c.Listen}, nil
+func initWebAppCfg(c *config) (api.AppConfig, error) {
+	return api.AppConfig{Timeout: c.Timeout, NetInterface: c.Listen}, nil
 }
 
 func initLogger(c *config) error {

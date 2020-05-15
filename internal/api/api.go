@@ -1,6 +1,6 @@
-// Package web is responsible for creating and initializing endpoints for interacting with the database.
+// Package api is responsible for creating and initializing endpoints for interacting with the database.
 //
-package web
+package api
 
 import (
 	"fmt"
@@ -30,7 +30,7 @@ type AppConfig struct {
 }
 
 func (ac *AppConfig) checkConfig() {
-	log.Debug().Msg("checking web application config")
+	log.Debug().Msg("checking api application config")
 
 	if ac.NetInterface == "" {
 		ac.NetInterface = "localhost:9000"
@@ -79,7 +79,7 @@ func (v *Validator) Validate(i interface{}) error {
 func NewApp(appCfg AppConfig) (*API, error) {
 	appCfg.checkConfig()
 
-	log.Debug().Interface("web app config", appCfg).Msg("starting initialize web application")
+	log.Debug().Interface("api app config", appCfg).Msg("starting initialize api application")
 
 	e := echo.New()
 
@@ -185,7 +185,7 @@ func logMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			Str("path", c.Path()).
 			Msgf("called url %s", c.Request().URL)
 
-		// middleware.Logger()(next)
+		//middleware.Logger()(next)
 
 		return next(c)
 	}
