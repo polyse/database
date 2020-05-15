@@ -306,6 +306,7 @@ func maxKeys(input map[string][]string) map[string][]string {
 }
 
 func findSources(tx *nutsdb.Tx, src map[string][]string) (res []ResponseData, err error) {
+	res = make([]ResponseData, 0, len(src))
 	for i := range src {
 		e, err := tx.Get(sourceBucket, []byte(i))
 		if err != nil {
