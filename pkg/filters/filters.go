@@ -1,3 +1,5 @@
+// Package filters are used to split the string into tokens and filter incoming tokens.
+//
 package filters
 
 import (
@@ -8,10 +10,13 @@ import (
 	"github.com/zoomio/stopwords"
 )
 
-// Filter is type for input sort functions as parameters to FilterText
+// Filter is type for input sort functions as parameters to FilterText.
 type Filter func(tokens []string) []string
 
-// FilterText divide text to tokens, trim tokens and apply filters to tokens
+// Tokenizer is type to tokenize text and apply filters to tokens.
+type Tokenizer func(text string, filters ...Filter) []string
+
+// FilterText divide text to tokens, trim tokens and apply filters to tokens.
 func FilterText(text string, filters ...Filter) []string {
 	tokens := strings.FieldsFunc(text, func(c rune) bool {
 		return !unicode.IsLetter(c) && !unicode.IsNumber(c) && c != '\'' && c != '-'
@@ -31,7 +36,7 @@ func FilterText(text string, filters ...Filter) []string {
 	return output
 }
 
-// StopWords remove stop words from tokens
+// StopWords remove stop words from tokens.
 func StopWords(tokens []string) []string {
 	var output []string
 	for _, token := range tokens {
@@ -42,7 +47,7 @@ func StopWords(tokens []string) []string {
 	return output
 }
 
-// StemmAndToLower stemm tokens and change them to lower case
+// StemmAndToLower stemm tokens and change them to lower case.
 func StemmAndToLower(tokens []string) []string {
 	output := make([]string, 0, len(tokens))
 	for _, token := range tokens {

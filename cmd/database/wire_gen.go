@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/polyse/database/internal/api"
+	"github.com/polyse/database/internal/collection"
 )
 
 // Injectors from wire.go:
@@ -24,5 +25,20 @@ func initWebApp(ctx context.Context, c *config) (*api.API, func(), error) {
 	}
 	return app, func() {
 		app.Close()
+	}, nil
+}
+
+func initProcessorManager(c *config, collName collection.Name) (*collection.Manager, func(), error) {
+	collectionConfig := initDbConfig(c)
+	db, cleanup, err := initConnection(collectionConfig)
+	if err != nil {
+		return nil, nil, err
+	}
+	tokenizer := initTokenizer()
+	v := initFilters()
+	simpleProcessor := collection.NewSimpleProcessor(db, collName, tokenizer, v...)
+	manager := collection.NewManagerWithProc(simpleProcessor)
+	return manager, func() {
+		cleanup()
 	}, nil
 }
