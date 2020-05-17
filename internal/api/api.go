@@ -4,7 +4,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -12,10 +11,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/polyse/database/internal/collection"
 	"github.com/rs/zerolog/log"
-)
-
-var (
-	simpleMessage = `{"message": "%d %s"}`
 )
 
 // Context structure for handle context from main.
@@ -113,13 +108,20 @@ func (api *API) handleHealthcheck(c echo.Context) error {
 func (api *API) handleSearch(c echo.Context) error {
 	var err error
 
+	// This will be used.
+	//
+	// collection := c.Param("collection")
+	// proc, err := api.Manager.GetProcessor(collection)
+	// if err != nil {
+	// 	log.Debug().Err(err).Msg("handleSearch GetProcessor err")
+	// 	return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	// }
+
 	request := &SearchRequest{}
 	if err := c.Bind(request); err != nil {
 		log.Debug().Err(err).Msg("handleSearch Bind err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-
-	collection := c.Param("collection")
 
 	log.Debug().
 		Str("collection", collection).
@@ -180,8 +182,7 @@ func (a *API) Close() error {
 }
 
 func ok(c echo.Context) error {
-	encodedJSON := []byte(fmt.Sprintf(simpleMessage, http.StatusOK, http.StatusText(http.StatusOK)))
-	return c.JSONBlob(http.StatusOK, encodedJSON)
+	return c.JSON(http.StatusOK, http.StatusText(http.StatusOK))
 }
 
 func logMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
