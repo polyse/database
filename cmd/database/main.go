@@ -68,7 +68,8 @@ func main() {
 	closer.Bind(cancel)
 
 	log.Debug().Msg("starting db")
-	_, connCLoser, err := initProcessorManager(cfg, "default")
+	var connCLoser func()
+	a.Manager, connCLoser, err = initProcessorManager(cfg, "default")
 	closer.Bind(connCLoser)
 
 	log.Debug().Msg("starting web application")

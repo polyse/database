@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	// "github.com/polyse/database/internal/collection"
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
+	"github.com/polyse/database/internal/collection"
 	"github.com/rs/zerolog/log"
 )
 
@@ -28,6 +28,7 @@ type Context struct {
 type API struct {
 	e    *echo.Echo
 	addr string
+	*collection.Manager
 }
 
 // AppConfig structure containing the server settings necessary for its operation.
@@ -47,22 +48,9 @@ func (ac *AppConfig) checkConfig() {
 	}
 }
 
-// Source structure for domain\article\site\source description.
-type Source struct {
-	Date  time.Time `json:"date" validate:"required"` // format: 2006-01-02T15:04:05+07:00
-	Title string    `json:"title" validate:"required"`
-}
-
-// RawData structure for json data description.
-type RawData struct {
-	Source `json:"source" validate:"required,dive"`
-	Url    string `json:"url" validate:"required,url"`
-	Data   string `json:"data" validate:"required"`
-}
-
 // Documents is type to Bind for get []RawData
 type Documents struct {
-	Documents []RawData `json:"documents" validate:"required,dive"`
+	Documents []collection.RawData `json:"documents" validate:"required,dive"`
 }
 
 // SearchRequest is strust for storage and validate query param.
@@ -156,19 +144,28 @@ func (api *API) handleAddDocuments(c echo.Context) error {
 		Str("collection", collection).
 		Msg("handleSearch run")
 
+	proc, err := api.Manager.GetProcessor(collection)
+	if err != nil {
+		log.Debug().Err(err).Msg("handleAddDocuments GetProcessor err")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	docs := &Documents{}
-	if err := c.Bind(docs); err != nil {
+	if err = c.Bind(docs); err != nil {
 		log.Debug().Err(err).Msg("handleAddDocuments Bind err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
-	if err := c.Validate(docs); err != nil {
+	if err = c.Validate(docs); err != nil {
 		log.Debug().Err(err).Msg("handleAddDocuments Validate err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	// here will be sending document to bd
+	if err = proc.ProcessAndInsertString(docs.Documents); err != nil {
+		log.Debug().Err(err).Msg("handleAddDocuments ProcessAndInsertString err")
+		return echo.NewHTTPError(http.StatusUnprocessableEntity)
+	}
 
-	return ok(c)
+	return c.JSON(http.StatusCreated, http.StatusText(http.StatusCreated))
 }
 
 // Run start the server.

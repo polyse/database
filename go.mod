@@ -13,14 +13,12 @@ require (
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo/v4 v4.1.16
 	github.com/leodido/go-urn v1.2.0 // indirect
-	github.com/rs/zerolog v1.18.0
-	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2
-	github.com/ziflex/lecho/v2 v2.0.0 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/rs/zerolog v1.18.0
 	github.com/stretchr/testify v1.5.1
 	github.com/xlab/closer v0.0.0-20190328110542-03326addb7c2
 	github.com/xujiajun/nutsdb v0.5.0
+	github.com/ziflex/lecho/v2 v2.0.0 // indirect
 	github.com/zoomio/stopwords v0.5.0
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
 )
