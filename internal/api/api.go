@@ -4,6 +4,7 @@ package api
 
 import (
 	"context"
+	"github.com/xujiajun/nutsdb"
 	"net/http"
 	"time"
 
@@ -135,7 +136,11 @@ func (a *API) handleSearch(c echo.Context) error {
 	r, err := proc.ProcessAndGet(request.Query, request.Limit, request.Offset)
 
 	if err != nil {
-		log.Err(err)
+		if err == nutsdb.ErrNotFoundKey {
+			log.Debug().Err(err).Msg("key not found")
+			return echo.ErrNotFound
+		}
+		log.Err(err).Msg("saving error")
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
