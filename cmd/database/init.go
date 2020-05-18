@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/polyse/database/internal/collection"
-	"github.com/polyse/database/internal/web"
+	"github.com/polyse/database/internal/api"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -48,8 +48,8 @@ func initDbConfig(c *config) collection.Config {
 	return collection.Config{File: c.DbFile}
 }
 
-func initWebAppCfg(c *config) (web.AppConfig, error) {
-	return web.AppConfig{Timeout: c.Timeout, NetInterface: c.Listen}, nil
+func initWebAppCfg(c *config) (api.AppConfig, error) {
+	return api.AppConfig{Timeout: c.Timeout, NetInterface: c.Listen}, nil
 }
 
 func initLogger(c *config) error {

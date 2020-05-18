@@ -64,18 +64,16 @@ func main() {
 		return
 	}
 
-	log.Debug().Msg("starting web application")
-
 	// Bind closer func to smoothly close connection.
 	closer.Bind(cancel)
 
 	log.Debug().Msg("starting db")
-	_, connCLoser, err := initProcessorManager(cfg, "default")
+	var connCLoser func()
+	a.Manager, connCLoser, err = initProcessorManager(cfg, "default")
 	closer.Bind(connCLoser)
 
 	log.Debug().Msg("starting web application")
-
 	if err = a.Run(); err != nil {
-		log.Err(err).Msg("error while starting web app")
+		log.Err(err).Msg("error while starting api app")
 	}
 }
