@@ -51,7 +51,7 @@ type Source struct {
 
 type ResponseData struct {
 	Source
-	Url string
+	Url string `json:"url"`
 }
 
 // RawData structure for json data description
