@@ -101,17 +101,17 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*API, error) {
 	return a, nil
 }
 
-func (api *API) handleHealthcheck(c echo.Context) error {
+func (a *API) handleHealthcheck(c echo.Context) error {
 	return ok(c)
 }
 
-func (api *API) handleSearch(c echo.Context) error {
+func (a *API) handleSearch(c echo.Context) error {
 	var err error
 
+	collection := c.Param("collection")
 	// This will be used.
 	//
-	// collection := c.Param("collection")
-	// proc, err := api.Manager.GetProcessor(collection)
+	// proc, err := a.Manager.GetProcessor(collection)
 	// if err != nil {
 	// 	log.Debug().Err(err).Msg("handleSearch GetProcessor err")
 	// 	return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -139,14 +139,14 @@ func (api *API) handleSearch(c echo.Context) error {
 	return ok(c)
 }
 
-func (api *API) handleAddDocuments(c echo.Context) error {
+func (a *API) handleAddDocuments(c echo.Context) error {
 	collection := c.Param("collection")
 
 	log.Debug().
 		Str("collection", collection).
 		Msg("handleSearch run")
 
-	proc, err := api.Manager.GetProcessor(collection)
+	proc, err := a.Manager.GetProcessor(collection)
 	if err != nil {
 		log.Debug().Err(err).Msg("handleAddDocuments GetProcessor err")
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -167,7 +167,7 @@ func (api *API) handleAddDocuments(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnprocessableEntity)
 	}
 
-	return c.JSON(http.StatusCreated, http.StatusText(http.StatusCreated))
+	return c.JSON(http.StatusCreated, docs)
 }
 
 // Run start the server.
