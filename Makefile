@@ -1,11 +1,11 @@
 GOCMD=go
 GOBUILD=$(GOCMD) build
-BINARY_NAME=bin/database
+BINARY_NAME=./bin/database
 
-all: wire_build build run_server
+all: test build run_server
 
 wire_build:
-	cd cmd/database && wire
+	wire gen ./cmd/database
 	echo "wire build"
 
 build:
@@ -13,6 +13,7 @@ build:
 	echo "binary build"
 
 run_server:
-	$(BINARY_NAME)
+	LOG_LEVEL=debug $(BINARY_NAME)
 
-
+test:
+	$(GOCMD) test -v ./...
