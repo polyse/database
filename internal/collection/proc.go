@@ -268,6 +268,7 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 			if err.Error() == "set not exists" ||
 				strings.HasPrefix(err.Error(), "not found bucket:"+bucketName+",key:") {
 				log.Debug().Err(err).Str("bucket", bucketName).Str("key", keys[i]).Msg("key not found")
+				continue
 			}
 			return nil, err
 		}
