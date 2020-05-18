@@ -265,10 +265,8 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 	for i := range keys {
 		d, err := tx.SMembers(bucketName, []byte(keys[i]))
 		if err != nil {
-			if err.Error() == "set not exists" ||
-				strings.HasPrefix(err.Error(), "not found bucket:"+bucketName+",key:") {
+			if strings.HasPrefix(err.Error(), "not found bucket:"+bucketName+",key:") {
 				log.Debug().Err(err).Str("bucket", bucketName).Str("key", keys[i]).Msg("key not found")
-				err = nutsdb.ErrNotFoundKey
 			}
 			return nil, err
 		}
