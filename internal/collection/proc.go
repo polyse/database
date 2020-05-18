@@ -174,6 +174,12 @@ func (p *SimpleProcessor) GetCollectionName() string {
 // after which it finds documents in the specified collection with the maximum number of words from the search query.
 // Supports pagination.
 func (p *SimpleProcessor) ProcessAndGet(query string, limit, offset int) ([]ResponseData, error) {
+	if limit < 1 {
+		limit = 10
+	}
+	if offset < 0 {
+		offset = 0
+	}
 	clearText := p.tokenizer(query, p.filters...)
 	return p.findByWords(clearText, limit, offset)
 }
@@ -274,11 +280,11 @@ func findKeys(tx *nutsdb.Tx, bucketName string, keys []string) (map[string][]str
 }
 
 func clearDoubleKeys(keys []string) []string {
-	clearMap := make(map[string]bool)
+	clearMap := make(map[string]struct{})
 	var result []string
 	for i := range keys {
 		if _, ok := clearMap[keys[i]]; !ok {
-			clearMap[keys[i]] = true
+			clearMap[keys[i]] = struct{}{}
 			result = append(result, keys[i])
 		}
 	}

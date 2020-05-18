@@ -108,14 +108,12 @@ func (a *API) handleHealthcheck(c echo.Context) error {
 func (a *API) handleSearch(c echo.Context) error {
 	var err error
 
-	collection := c.Param("collection")
-	// This will be used.
-	//
-	// proc, err := a.Manager.GetProcessor(collection)
-	// if err != nil {
-	// 	log.Debug().Err(err).Msg("handleSearch GetProcessor err")
-	// 	return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	// }
+	collectionName := c.Param("collection")
+	proc, err := a.Manager.GetProcessor(collectionName)
+	if err != nil {
+		log.Debug().Err(err).Msg("handleSearch GetProcessor err")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
 
 	request := &SearchRequest{}
 	if err := c.Bind(request); err != nil {
@@ -124,7 +122,7 @@ func (a *API) handleSearch(c echo.Context) error {
 	}
 
 	log.Debug().
-		Str("collection", collection).
+		Str("collection", collectionName).
 		Str("q", request.Query).
 		Int("limit", request.Limit).
 		Msg("handleSearch run")
@@ -134,19 +132,24 @@ func (a *API) handleSearch(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
 
-	// here will be searching
+	r, err := proc.ProcessAndGet(request.Query, request.Limit, request.Offset)
 
-	return ok(c)
+	if err != nil {
+		log.Err(err)
+		return echo.NewHTTPError(http.StatusInternalServerError)
+	}
+
+	return c.JSON(http.StatusOK, r)
 }
 
 func (a *API) handleAddDocuments(c echo.Context) error {
-	collection := c.Param("collection")
+	collectionName := c.Param("collection")
 
 	log.Debug().
-		Str("collection", collection).
-		Msg("handleSearch run")
+		Str("collection", collectionName).
+		Msg("adding documents")
 
-	proc, err := a.Manager.GetProcessor(collection)
+	proc, err := a.Manager.GetProcessor(collectionName)
 	if err != nil {
 		log.Debug().Err(err).Msg("handleAddDocuments GetProcessor err")
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
