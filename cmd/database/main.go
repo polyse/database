@@ -9,6 +9,7 @@ import (
 	"github.com/xujiajun/nutsdb"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/google/wire"
 	"github.com/polyse/database/internal/collection"
@@ -105,7 +106,24 @@ func initConnection(cfg collection.Config) (*nutsdb.DB, func(), error) {
 		return nil, nil, err
 	}
 	log.Info().Msg("connection opened")
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	go func(ctx context.Context, db *nutsdb.DB) {
+		for {
+			select {
+			case <-time.After(cfg.MergeTimeout):
+				if err = db.Merge(); err != nil {
+					log.Warn().Err(err).Msg("can not merge database")
+				}
+			case <-ctx.Done():
+				return
+			}
+		}
+	}(ctx, nutsDb)
+
 	return nutsDb, func() {
+		cancel()
 		log.Info().Msg("start closing database connection")
 		if err = nutsDb.Merge(); err != nil {
 			log.Err(err).Msg("can not merge database")
@@ -117,7 +135,7 @@ func initConnection(cfg collection.Config) (*nutsdb.DB, func(), error) {
 }
 
 func initDbConfig(c *config) collection.Config {
-	return collection.Config{File: c.DbFile}
+	return collection.Config{File: c.DbFile, MergeTimeout: c.MergeTimeout}
 }
 
 func initWebAppCfg(c *config) (api.AppConfig, error) {

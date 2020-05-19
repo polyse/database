@@ -40,7 +40,8 @@ type SimpleProcessor struct {
 
 // Config describes the basic database configuration.
 type Config struct {
-	File string
+	File         string
+	MergeTimeout time.Duration
 }
 
 // Source structure for domain\article\site\source description
