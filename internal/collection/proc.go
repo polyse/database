@@ -16,8 +16,9 @@ import (
 )
 
 var (
-	dataPrefix   = "d-"
-	sourceBucket = "sources"
+	dataPrefix       = "d-"
+	sourceBucket     = "sources"
+	collectionBucket = "collections"
 )
 
 // Processor  an interface designed to process and filter incoming data for subsequent
@@ -40,7 +41,8 @@ type SimpleProcessor struct {
 
 // Config describes the basic database configuration.
 type Config struct {
-	File string
+	File         string
+	MergeTimeout time.Duration
 }
 
 // Source structure for domain\article\site\source description
@@ -76,14 +78,22 @@ func NewSimpleProcessor(
 	colName Name,
 	tokenizer filters.Tokenizer,
 	textFilters ...filters.Filter,
-) *SimpleProcessor {
+) (*SimpleProcessor, error) {
+	if err := db.Update(func(tx *nutsdb.Tx) error {
+		if err := tx.Put(collectionBucket, []byte(colName), []byte(time.Now().String()), 0); err != nil {
+			return err
+		}
+		return nil
+	}); err != nil {
+		return nil, err
+	}
 	return &SimpleProcessor{
 		db:         db,
 		filters:    textFilters,
 		tokenizer:  tokenizer,
 		colName:    string(colName),
 		bucketName: dataPrefix + string(colName),
-	}
+	}, nil
 }
 
 // ProcessAndInsertString changes the input data using the filters specified in this processor,
