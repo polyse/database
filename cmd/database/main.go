@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/polyse/database/internal/api"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/xujiajun/nutsdb"
-	"os"
-	"strings"
 
 	"github.com/google/wire"
 	"github.com/polyse/database/internal/collection"
