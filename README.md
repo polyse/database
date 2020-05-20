@@ -4,6 +4,10 @@
 
 [ElasticSearch](https://www.elastic.co/) conceptual searchable indexable database.
 
+## Docker image
+
+`docker pull polyse/database:latest`
+
 ## Installing
 
 Quick start database:
