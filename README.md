@@ -1,5 +1,6 @@
 # polySE: Database
 [![Go Report Card](https://goreportcard.com/badge/github.com/polyse/database)](https://goreportcard.com/report/github.com/polyse/database)
+![Docker Cloud Build Status](https://img.shields.io/docker/cloud/build/polyse/database)
 
 [ElasticSearch](https://www.elastic.co/) conceptual searchable indexable database.
 
