@@ -49,6 +49,7 @@ type Source struct {
 	Title string    `json:"title" validate:"required"`
 }
 
+// ResponseData structure to return search result.
 type ResponseData struct {
 	Source
 	Url string `json:"url"`
@@ -70,7 +71,7 @@ type WordInfo struct {
 // Name is type to describe collection name in database
 type Name string
 
-// NewProcessor function-constructor to SimpleProcessor
+// NewSimpleProcessor function-constructor to SimpleProcessor
 func NewSimpleProcessor(
 	db *nutsdb.DB,
 	colName Name,
@@ -358,9 +359,9 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 				enc := gob.NewEncoder(&b)
 				if err := enc.Encode(vals[j]); err != nil {
 					return err
-				} else {
-					data = append(data, b.Bytes())
 				}
+				data = append(data, b.Bytes())
+
 			}
 			if err := tx.SAdd(p.bucketName, []byte(i), data...); err != nil {
 				p.l.Err(err).

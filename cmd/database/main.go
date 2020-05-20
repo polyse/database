@@ -77,6 +77,10 @@ func main() {
 	log.Debug().Msg("starting db")
 	var connCLoser func()
 	a.Manager, connCLoser, err = initProcessorManager(cfg, "default")
+	if err != nil {
+		log.Err(err).Msg("can not init proc manager")
+		return
+	}
 	closer.Bind(connCLoser)
 
 	log.Debug().Msg("starting web application")
