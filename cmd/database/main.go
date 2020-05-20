@@ -3,15 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/google/wire"
 	"github.com/polyse/database/internal/api"
+	"github.com/polyse/database/internal/collection"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/xujiajun/nutsdb"
 	"os"
 	"strings"
-
-	"github.com/google/wire"
-	"github.com/polyse/database/internal/collection"
 
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/closer"

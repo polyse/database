@@ -3,7 +3,10 @@ package collection
 import (
 	"bytes"
 	"encoding/gob"
+	"encoding/json"
 	"fmt"
+	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -41,8 +44,7 @@ type SimpleProcessor struct {
 
 // Config describes the basic database configuration.
 type Config struct {
-	File         string
-	MergeTimeout time.Duration
+	File string
 }
 
 // Source structure for domain\article\site\source description
@@ -72,6 +74,11 @@ type WordInfo struct {
 // Name is type to describe collection name in database
 type Name string
 
+type Metadata struct {
+	ColFilters []string `json:"col_filters"`
+	Tokenizer  string   `json:"tokenizer"`
+}
+
 // NewProcessor function-constructor to SimpleProcessor
 func NewSimpleProcessor(
 	db *nutsdb.DB,
@@ -79,8 +86,54 @@ func NewSimpleProcessor(
 	tokenizer filters.Tokenizer,
 	textFilters ...filters.Filter,
 ) (*SimpleProcessor, error) {
+	return newSimpleProcessorUtil(db, colName, tokenizer, Metadata{
+		ColFilters: getFilterNames(textFilters),
+		Tokenizer:  getTokenizerName(tokenizer),
+	}, textFilters...)
+}
+
+func newSimpleProcessorByStrings(
+	db *nutsdb.DB,
+	colName Name,
+	tokenizer string,
+	textFilters ...string,
+) (*SimpleProcessor, error) {
+	log.Debug().
+		Str("tokenizer name", tokenizer).
+		Strs("filters name", textFilters).
+		Msg("init processor from string tokenizer and filters")
+	t, ok := tokenizerMap[tokenizer]
+	if !ok {
+		return nil, fmt.Errorf("incorrect tokenizer name: %s", tokenizer)
+	}
+	var f []filters.Filter
+	for _, fn := range textFilters {
+		tmp, ok := filterMap[fn]
+		if !ok {
+			return nil, fmt.Errorf("incorrect filter name: %s", fn)
+		}
+		f = append(f, tmp)
+	}
+	return newSimpleProcessorUtil(db, colName, t, Metadata{
+		ColFilters: textFilters,
+		Tokenizer:  tokenizer,
+	}, f...)
+}
+
+func newSimpleProcessorUtil(
+	db *nutsdb.DB,
+	colName Name,
+	tokenizer filters.Tokenizer,
+	cm Metadata,
+	textFilters ...filters.Filter,
+) (*SimpleProcessor, error) {
+	log.Debug().Interface("metadata", cm).Msg("init proc with metadata")
+	rawMeta, err := json.Marshal(cm)
+	if err != nil {
+		return nil, err
+	}
 	if err := db.Update(func(tx *nutsdb.Tx) error {
-		if err := tx.Put(collectionBucket, []byte(colName), []byte(time.Now().String()), 0); err != nil {
+		if err := tx.Put(collectionBucket, []byte(colName), rawMeta, 0); err != nil {
 			return err
 		}
 		return nil
@@ -381,4 +434,16 @@ func (p *SimpleProcessor) saveData(ent map[string][]*WordInfo) error {
 		}
 		return nil
 	})
+}
+
+func getFilterNames(fs []filters.Filter) []string {
+	var res []string
+	for _, f := range fs {
+		res = append(res, runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name())
+	}
+	return res
+}
+
+func getTokenizerName(t filters.Tokenizer) string {
+	return runtime.FuncForPC(reflect.ValueOf(t).Pointer()).Name()
 }
