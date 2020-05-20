@@ -137,7 +137,7 @@ func (a *API) handleSearch(c echo.Context) error {
 	r, err := proc.ProcessAndGet(request.Query, request.Limit, request.Offset)
 
 	if err != nil {
-		log.Err(err)
+		log.Err(err).Msg("saving error")
 		return echo.NewHTTPError(http.StatusInternalServerError)
 	}
 
