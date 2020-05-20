@@ -65,6 +65,11 @@ func (v *Validator) Validate(i interface{}) error {
 	return v.validator.Struct(i)
 }
 
+type CollectionInfo struct {
+	Name     string              `json:"name"`
+	Metadata collection.Metadata `json:"metadata"`
+}
+
 // NewApp returns a new ready-to-launch API object with adjusted settings.
 func NewApp(ctx context.Context, appCfg AppConfig) (*API, error) {
 	appCfg.checkConfig()
@@ -175,29 +180,18 @@ func (a *API) handleAddDocuments(c echo.Context) error {
 	return c.JSON(http.StatusCreated, docs)
 }
 
-type CollectionReq struct {
-	ColName     string   `json:"col_name"`
-	TextFilters []string `json:"text_filters"`
-	Tokenizer   string   `json:"tokenizer"`
-}
-
 func (a *API) handleAddCollection(c echo.Context) error {
-	cr := &CollectionReq{}
+	cr := &CollectionInfo{}
 	if err := c.Bind(cr); err != nil {
 		log.Debug().Err(err).Msg("handleAddCollection Bind err")
 		return echo.ErrBadRequest
 	}
-	p, err := a.InitNewProc(cr.ColName, cr.Tokenizer, cr.TextFilters...)
+	p, err := a.InitNewProc(cr.Name, cr.Metadata.Tokenizer, cr.Metadata.ColFilters...)
 	if err != nil {
 		return echo.ErrInternalServerError
 	}
 	a.AddProcessor(p)
 	return nil
-}
-
-type CollectionInfo struct {
-	Name     string              `json:"name"`
-	Metadata collection.Metadata `json:"metadata"`
 }
 
 func (a *API) handleGetAllCollections(c echo.Context) error {
