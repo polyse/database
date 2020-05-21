@@ -35,13 +35,16 @@ func (cts *processorTestSuite) SetupTest() {
 	if err != nil {
 		panic(err)
 	}
-	proc := NewSimpleProcessor(
+	proc, err := NewSimpleProcessor(
 		nutsDb,
 		Name(nutColl),
 		filters.FilterText,
 		filters.StemmAndToLower,
 		filters.StopWords,
 	)
+	if err != nil {
+		panic(err)
+	}
 	cts.proc = proc
 	cts.nutsDb = nutsDb
 }

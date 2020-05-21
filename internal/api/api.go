@@ -65,6 +65,11 @@ func (v *Validator) Validate(i interface{}) error {
 	return v.validator.Struct(i)
 }
 
+type CollectionInfo struct {
+	Name     string              `json:"name"`
+	Metadata collection.Metadata `json:"metadata"`
+}
+
 // NewApp returns a new ready-to-launch API object with adjusted settings.
 func NewApp(ctx context.Context, appCfg AppConfig) (*API, error) {
 	appCfg.checkConfig()
@@ -95,6 +100,8 @@ func NewApp(ctx context.Context, appCfg AppConfig) (*API, error) {
 	g := e.Group("/api")
 	g.GET("/:collection/documents", a.handleSearch)
 	g.POST("/:collection/documents", a.handleAddDocuments)
+	g.POST("/collections", a.handleAddCollection)
+	g.GET("/collections", a.handleGetAllCollections)
 
 	log.Debug().Msg("endpoints registered")
 
@@ -171,6 +178,36 @@ func (a *API) handleAddDocuments(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusCreated, docs)
+}
+
+func (a *API) handleAddCollection(c echo.Context) error {
+	cr := &CollectionInfo{}
+	if err := c.Bind(cr); err != nil {
+		log.Debug().Err(err).Msg("handleAddCollection Bind err")
+		return echo.ErrBadRequest
+	}
+	p, err := a.InitNewProc(cr.Name, cr.Metadata.Tokenizer, cr.Metadata.ColFilters...)
+	if err != nil {
+		return echo.ErrInternalServerError
+	}
+	a.AddProcessor(p)
+	return nil
+}
+
+func (a *API) handleGetAllCollections(c echo.Context) error {
+	r, err := a.GetAllCollectionsInfo()
+	if err != nil {
+		log.Err(err).Msg("can not get all collections")
+	}
+	var ci []CollectionInfo
+	for k := range r {
+		ci = append(ci, CollectionInfo{
+			Metadata: r[k],
+			Name:     k,
+		})
+	}
+
+	return c.JSON(http.StatusOK, ci)
 }
 
 // Run start the server.
