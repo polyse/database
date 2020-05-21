@@ -10,11 +10,12 @@ import (
 
 // Config is main application configuration structure.
 type config struct {
-	Listen   string        `env:"LISTEN" envDefault:"localhost:9000"`
-	Timeout  time.Duration `env:"TIMEOUT" envDefault:"10ms"`
-	LogLevel string        `env:"LOG_LEVEL" envDefault:"info"`
-	LogFmt   string        `env:"LOG_FMT" envDefault:"console"`
-	DbFile   string        `env:"DB_FILE" envDefault:"./tmp/nutsdb"`
+	Listen       string        `env:"LISTEN" envDefault:"localhost:9000"`
+	Timeout      time.Duration `env:"TIMEOUT" envDefault:"10ms"`
+	MergeTimeout time.Duration `env:"TIMEOUT" envDefault:"1h"`
+	LogLevel     string        `env:"LOG_LEVEL" envDefault:"info"`
+	LogFmt       string        `env:"LOG_FMT" envDefault:"console"`
+	DbFile       string        `env:"DB_FILE" envDefault:"./tmp/nutsdb"`
 }
 
 func load() (*config, error) {
