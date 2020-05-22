@@ -3,37 +3,18 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/polyse/database/internal/api"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/xujiajun/nutsdb"
-	"os"
-	"strings"
 
-	"github.com/google/wire"
 	"github.com/polyse/database/internal/collection"
 
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/closer"
-)
-
-var (
-	procSetter = wire.NewSet(
-		initDbConfig,
-		initConnection,
-		initTokenizer,
-		initFilters,
-		collection.NewSimpleProcessor,
-	)
-
-	dbSetter = wire.NewSet(
-		procSetter,
-		wire.Bind(
-			new(collection.Processor),
-			new(*collection.SimpleProcessor),
-		),
-		collection.NewManagerWithProc,
-	)
 )
 
 func main() {
@@ -77,6 +58,10 @@ func main() {
 	log.Debug().Msg("starting db")
 	var connCLoser func()
 	a.Manager, connCLoser, err = initProcessorManager(cfg, "default")
+	if err != nil {
+		log.Err(err).Msg("can not init proc manager")
+		return
+	}
 	closer.Bind(connCLoser)
 
 	log.Debug().Msg("starting web application")

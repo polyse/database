@@ -66,22 +66,21 @@ func (cts *processorTestSuite) TestNutsRepository_Save1() {
 		func(tx *nutsdb.Tx) error {
 			key := []byte("data1")
 			bucket := dataPrefix + nutColl
-			if e, err := tx.SMembers(bucket, key); err != nil {
+			e, err := tx.SMembers(bucket, key)
+			if err != nil {
 				return err
-			} else {
-				data := make([]WordInfo, 0, len(e))
-				for i := range e {
-					var s WordInfo
-					r := bytes.NewReader(e[i])
-					dec := gob.NewDecoder(r)
-					if err := dec.Decode(&s); err != nil {
-						return err
-					} else {
-						data = append(data, s)
-					}
-				}
-				cts.ElementsMatch([]WordInfo{{Url: "test", Pos: []int{0}}}, data)
 			}
+			data := make([]WordInfo, 0, len(e))
+			for i := range e {
+				var s WordInfo
+				r := bytes.NewReader(e[i])
+				dec := gob.NewDecoder(r)
+				if err := dec.Decode(&s); err != nil {
+					return err
+				}
+				data = append(data, s)
+			}
+			cts.ElementsMatch([]WordInfo{{Url: "test", Pos: []int{0}}}, data)
 			return nil
 		}); err != nil {
 		panic(err)
@@ -115,22 +114,21 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 		func(tx *nutsdb.Tx) error {
 			key := []byte("data2")
 			bucket := dataPrefix + nutColl
-			if e, err := tx.SMembers(bucket, key); err != nil {
+			e, err := tx.SMembers(bucket, key)
+			if err != nil {
 				return err
-			} else {
-				data := make([]WordInfo, 0, len(e))
-				for i := range e {
-					var s WordInfo
-					r := bytes.NewReader(e[i])
-					dec := gob.NewDecoder(r)
-					if err := dec.Decode(&s); err != nil {
-						return err
-					} else {
-						data = append(data, s)
-					}
-				}
-				cts.ElementsMatch([]WordInfo{{Url: "source1", Pos: []int{1, 2}}, {Url: "source2", Pos: []int{1}}}, data)
 			}
+			data := make([]WordInfo, 0, len(e))
+			for i := range e {
+				var s WordInfo
+				r := bytes.NewReader(e[i])
+				dec := gob.NewDecoder(r)
+				if err := dec.Decode(&s); err != nil {
+					return err
+				}
+				data = append(data, s)
+			}
+			cts.ElementsMatch([]WordInfo{{Url: "source1", Pos: []int{1, 2}}, {Url: "source2", Pos: []int{1}}}, data)
 			return nil
 		}); err != nil {
 		panic(err)
@@ -140,20 +138,20 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 		func(tx *nutsdb.Tx) error {
 			key := []byte("source1")
 			bucket := sourceBucket
-			if e, err := tx.Get(bucket, key); err != nil {
+			e, err := tx.Get(bucket, key)
+			if err != nil {
 				return err
-			} else {
-				var s Source
-				r := bytes.NewReader(e.Value)
-				dec := gob.NewDecoder(r)
-				if err := dec.Decode(&s); err != nil {
-					return err
-				}
-				cts.Equal(Source{
-					Date:  now.Round(1 * time.Nanosecond),
-					Title: "Test Title",
-				}, s)
 			}
+			var s Source
+			r := bytes.NewReader(e.Value)
+			dec := gob.NewDecoder(r)
+			if err := dec.Decode(&s); err != nil {
+				return err
+			}
+			cts.Equal(Source{
+				Date:  now.Round(1 * time.Nanosecond),
+				Title: "Test Title",
+			}, s)
 			return nil
 		}); err != nil {
 		panic(err)
@@ -174,22 +172,22 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 		func(tx *nutsdb.Tx) error {
 			key := []byte("data5")
 			bucket := dataPrefix + nutColl
-			if e, err := tx.SMembers(bucket, key); err != nil {
+			e, err := tx.SMembers(bucket, key)
+			if err != nil {
 				return err
-			} else {
-				data := make([]WordInfo, 0, len(e))
-				for i := range e {
-					var s WordInfo
-					r := bytes.NewReader(e[i])
-					dec := gob.NewDecoder(r)
-					if err := dec.Decode(&s); err != nil {
-						return err
-					} else {
-						data = append(data, s)
-					}
-				}
-				cts.ElementsMatch([]WordInfo{{Url: "source1", Pos: []int{0}}}, data)
 			}
+			data := make([]WordInfo, 0, len(e))
+			for i := range e {
+				var s WordInfo
+				r := bytes.NewReader(e[i])
+				dec := gob.NewDecoder(r)
+				if err := dec.Decode(&s); err != nil {
+					return err
+				}
+				data = append(data, s)
+			}
+			cts.ElementsMatch([]WordInfo{{Url: "source1", Pos: []int{0}}}, data)
+
 			return nil
 		}); err != nil {
 		panic(err)
@@ -199,20 +197,21 @@ func (cts *processorTestSuite) TestNutsRepository_Save2() {
 		func(tx *nutsdb.Tx) error {
 			key := []byte("source1")
 			bucket := sourceBucket
-			if e, err := tx.Get(bucket, key); err != nil {
+			e, err := tx.Get(bucket, key)
+			if err != nil {
 				return err
-			} else {
-				var s Source
-				r := bytes.NewReader(e.Value)
-				dec := gob.NewDecoder(r)
-				if err := dec.Decode(&s); err != nil {
-					return err
-				}
-				cts.Equal(Source{
-					Date:  now.Round(1 * time.Nanosecond),
-					Title: "Test Title New",
-				}, s)
 			}
+			var s Source
+			r := bytes.NewReader(e.Value)
+			dec := gob.NewDecoder(r)
+			if err := dec.Decode(&s); err != nil {
+				return err
+			}
+			cts.Equal(Source{
+				Date:  now.Round(1 * time.Nanosecond),
+				Title: "Test Title New",
+			}, s)
+
 			return nil
 		}); err != nil {
 		panic(err)
