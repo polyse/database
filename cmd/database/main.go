@@ -11,30 +11,10 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/xujiajun/nutsdb"
 
-	"github.com/google/wire"
 	"github.com/polyse/database/internal/collection"
 
 	"github.com/rs/zerolog/log"
 	"github.com/xlab/closer"
-)
-
-var (
-	procSetter = wire.NewSet(
-		initDbConfig,
-		initConnection,
-		initTokenizer,
-		initFilters,
-		collection.NewSimpleProcessor,
-	)
-
-	dbSetter = wire.NewSet(
-		procSetter,
-		wire.Bind(
-			new(collection.Processor),
-			new(*collection.SimpleProcessor),
-		),
-		collection.NewManagerWithProc,
-	)
 )
 
 func main() {
