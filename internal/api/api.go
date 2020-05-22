@@ -160,6 +160,12 @@ func (a *API) handleAddDocuments(c echo.Context) error {
 		log.Debug().Err(err).Msg("handleAddDocuments Bind err")
 		return echo.NewHTTPError(http.StatusBadRequest)
 	}
+
+	log.Debug().Interface("docs", docs).Msg("before validating")
+	if len(docs.Documents) == 0 {
+		return nil
+	}
+
 	if err = c.Validate(docs); err != nil {
 		log.Debug().Err(err).Msg("handleAddDocuments Validate err")
 		return echo.NewHTTPError(http.StatusBadRequest)
