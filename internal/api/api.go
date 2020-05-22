@@ -163,7 +163,7 @@ func (a *API) handleAddDocuments(c echo.Context) error {
 
 	log.Debug().Interface("docs", docs).Msg("before validating")
 	if len(docs.Documents) == 0 {
-		return nil
+		return c.JSON(http.StatusOK, docs)
 	}
 
 	if err = c.Validate(docs); err != nil {
