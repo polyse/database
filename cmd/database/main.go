@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/polyse/database/internal/api"
 	"github.com/polyse/database/pkg/filters"
 	"github.com/rs/zerolog"
 	"github.com/xujiajun/nutsdb"
-	"os"
-	"strings"
 
 	"github.com/polyse/database/internal/collection"
 
@@ -58,7 +59,7 @@ func main() {
 	var connCLoser func()
 	a.Manager, connCLoser, err = initProcessorManager(cfg, "default")
 	if err != nil {
-		log.Err(err).Msg("error while init wire manager")
+		log.Err(err).Msg("can not init proc manager")
 		return
 	}
 	closer.Bind(connCLoser)

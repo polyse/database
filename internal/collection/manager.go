@@ -1,4 +1,4 @@
-// Package proc is intended for separation, processing of incoming data using the specified filters
+// Package collection is intended for separation, processing of incoming data using the specified filters
 // for each collection for subsequent data saving to the database.
 package collection
 
@@ -10,6 +10,7 @@ import (
 )
 
 var (
+	// ErrCollectionNotExist error to return if collection does not exist.
 	ErrCollectionNotExist = errors.New("collection does not exist")
 )
 
