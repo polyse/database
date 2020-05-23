@@ -51,13 +51,13 @@ type Source struct {
 
 // ResponseData structure to return search result.
 type ResponseData struct {
-	Source
-	Url string `json:"url"`
+	Source Source
+	Url    string `json:"url"`
 }
 
 // RawData structure for json data description
 type RawData struct {
-	Source `json:"source" validate:"required,dive"`
+	Source Source `json:"source" validate:"required,dive"`
 	Url    string `json:"url" validate:"required,url"`
 	Data   string `json:"data" validate:"required"`
 }
@@ -157,7 +157,7 @@ ReadLoop:
 }
 
 func (p *SimpleProcessor) asyncProcessData(data RawData, errChan chan<- error, dataChan chan<- map[string]*WordInfo) {
-	if err := p.saveSource(data.Url, Source{Date: data.Date, Title: data.Title}); err != nil {
+	if err := p.saveSource(data.Url, Source{Date: data.Source.Date, Title: data.Source.Title}); err != nil {
 		errChan <- fmt.Errorf("can not save source %s, error %s", data.Url, err)
 		return
 	}
@@ -242,7 +242,7 @@ func (p *SimpleProcessor) findByWords(keys []string, limit, offset int) (res []R
 		Msg("data found")
 
 	sort.Slice(res, func(i, j int) bool {
-		return res[i].Date.After(res[j].Date)
+		return res[i].Source.Date.After(res[j].Source.Date)
 	})
 	if offset >= len(res) {
 		offset = 0
